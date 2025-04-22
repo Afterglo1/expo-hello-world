@@ -5,7 +5,7 @@ export default function Settingslayout() {
     <>
       <Stack >
         <Stack.Screen name="index" options={{headerShown:false}} />
-        <Stack.Screen name="cellular" options={{title:"Cellular Settings"}}  />
+        <Stack.Screen name="cellular" options={{title:"Cellular Settings",headerBackButtonDisplayMode:"minimal"}}  />
       </Stack>
     </>
   );
