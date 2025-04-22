@@ -53,8 +53,8 @@ export default function Settings() {
   };
   return (
     <>
-      <View style={styles.container}>
-        <Text style={styles.pageTitle}>Settings</Text>
+      <View className="flex-1 mt-14 px-5">
+        <Text className="text-2xl my-3 font-semibold">Settings</Text>
         <View style={styles.settingsContainer}>
           <FlatList
             data={settingsData.list1}
@@ -107,16 +107,16 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    marginTop: 50,
-    paddingHorizontal: 20,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "600",
-    marginVertical: 10,
-  },
+  // container: {
+  //   flex: 1,
+  //   marginTop: 50,
+  //   paddingHorizontal: 20,
+  // },
+  // pageTitle: {
+  //   fontSize: 24,
+  //   fontWeight: "600",
+  //   marginVertical: 10,
+  // },
   settingsContainer: {
     paddingHorizontal: 10,
     backgroundColor: "#fff",
