@@ -5,11 +5,13 @@ export default function AboutScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>About Screen</Text>
-      <Pressable style={styles.button}>
-        <Link href={"/settings"} style={{}}>
-          <Text style={styles.text}>Go to Settings</Text>
-        </Link>
-      </Pressable>
+      <Link href={"/settings"} style={{ marginTop: 15 }}>
+        <View style={styles.button}>
+          <Pressable>
+            <Text style={styles.text}>Go to Settings</Text>
+          </Pressable>
+        </View>
+      </Link>
     </View>
   );
 }
@@ -25,9 +27,9 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   button: {
+    color: "#fff",
     padding: 10,
     backgroundColor: "#4067f5",
-    marginTop: 10,
     borderRadius: 4,
     paddingHorizontal: 16,
   },
