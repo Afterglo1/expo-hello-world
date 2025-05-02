@@ -9,6 +9,7 @@ import {
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Chat from "@/components/Chat";
 
 const data = [
   {
@@ -83,10 +84,11 @@ const App = () => {
             data={data}
             renderItem={({ item }) => (
               <View className="my-10">
-                <Card id={item.id} />
+                <Card id={item.id} name={item.first_name} />
               </View>
             )}
           />
+          <Chat />
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>

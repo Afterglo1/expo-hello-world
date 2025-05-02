@@ -10,7 +10,12 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
 
-export default function Card({ id }: { id: number }) {
+type CardProps = {
+  id: number;
+  name: string;
+};
+
+export default function Card({ id, name }: CardProps) {
   const hearts = Array.from({ length: 6 }).map((_, index) => ({
     id: index,
     offsetX: Math.random() * 100 - 70, // -50 to +50
@@ -65,7 +70,7 @@ export default function Card({ id }: { id: number }) {
     });
 
   const iconStyle = useAnimatedStyle(() => {
-    const color = interpolateColor(liked.value, [0, 1], ["#cfd0d1", "red"]);
+    const color = interpolateColor(liked.value, [0, 1], ["#77797d", "#e0126f"]);
     return {
       color,
       transform: [{ scale: iconScale.value }],
@@ -76,11 +81,18 @@ export default function Card({ id }: { id: number }) {
     const borderColor = interpolateColor(
       liked.value,
       [0, 1],
-      ["#cfd0d1", "#103878"]
+      ["#cccdcf", "#103878"]
     );
+
+    const bgColor = interpolateColor(
+      liked.value,
+      [0, 1],
+      ["#cfd0d1", "#6795f0"]
+    );
+
     return {
-      borderColor,
       transform: [{ scale: cardScale.value }],
+      backgroundColor: bgColor,
     };
   });
 
@@ -105,9 +117,9 @@ export default function Card({ id }: { id: number }) {
             name="heart"
             size={25}
             className="absolute bottom-2 right-2"
-            style={[iconStyle]}
+            style={iconStyle}
           />
-          <Text>{id}</Text>
+          <Text>{name}</Text>
           {burstAnimations.map((anim, index) => {
             const style = useAnimatedStyle(() => ({
               position: "absolute",
