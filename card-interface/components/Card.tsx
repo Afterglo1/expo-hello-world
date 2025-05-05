@@ -18,7 +18,7 @@ type CardProps = {
 export default function Card({ id, name }: CardProps) {
   const hearts = Array.from({ length: 6 }).map((_, index) => ({
     id: index,
-    offsetX: Math.random() * 100 - 70, // -50 to +50
+    offsetX: Math.random() * 100 - 70,
     offsetY: Math.random() * -100 - 10, // upwards burst
   }));
   const liked = useSharedValue(0);
@@ -106,41 +106,43 @@ export default function Card({ id, name }: CardProps) {
     };
   });
 
-  return (
-    <GestureDetector gesture={doubleTap}>
-      <GestureDetector gesture={swipe(id)}>
-        <Animated.View
-          className="relative h-80 w-52 p-10 border-2 border-gray-300 rounded-lg"
-          style={[cardStyle, swipeStyle]}
-        >
-          <AnimatedIcon
-            name="heart"
-            size={25}
-            className="absolute bottom-2 right-2"
-            style={iconStyle}
-          />
-          <Text>{name}</Text>
-          {burstAnimations.map((anim, index) => {
-            const style = useAnimatedStyle(() => ({
-              position: "absolute",
-              bottom: 10,
-              right: 10,
-              transform: [
-                { translateX: anim.x.value },
-                { translateY: anim.y.value },
-                { scale: anim.scale.value },
-              ],
-              opacity: anim.opacity.value,
-            }));
+  const composed = Gesture.Race(doubleTap, swipe(id));
 
-            return (
-              <Animated.Text key={index} style={style}>
-                ❤️
-              </Animated.Text>
-            );
-          })}
-        </Animated.View>
-      </GestureDetector>
+  return (
+    <GestureDetector gesture={composed}>
+      {/* <GestureDetector gesture={swipe(id)}> */}
+      <Animated.View
+        className="relative h-80 w-52 p-10 border-2 border-gray-300 rounded-lg"
+        style={[cardStyle, swipeStyle]}
+      >
+        <AnimatedIcon
+          name="heart"
+          size={25}
+          className="absolute bottom-2 right-2"
+          style={iconStyle}
+        />
+        <Text>{name}</Text>
+        {burstAnimations.map((anim, index) => {
+          const style = useAnimatedStyle(() => ({
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            transform: [
+              { translateX: anim.x.value },
+              { translateY: anim.y.value },
+              { scale: anim.scale.value },
+            ],
+            opacity: anim.opacity.value,
+          }));
+
+          return (
+            <Animated.Text key={index} style={style}>
+              ❤️
+            </Animated.Text>
+          );
+        })}
+      </Animated.View>
+      {/* </GestureDetector> */}
     </GestureDetector>
   );
 }
