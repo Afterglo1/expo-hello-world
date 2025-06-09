@@ -6,16 +6,29 @@ import Animated, {
   withSpring,
   withSequence,
   withTiming,
+  runOnJS,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "react-native";
+import { useEffect } from "react";
+
+const SWIPE_THRESHOLD = 200;
+const SWIPE_DURATION = 300;
+const ACTIVE_OFFSET_X = 20;
+const FAIL_OFFSET_Y: [number, number] = [-25, 25];
+
+type SwipeGestureState = {
+  velocityX: number;
+  translationX: number;
+};
 
 type CardProps = {
   id: number;
   name: string;
+  removeCard: (id: number) => void;
 };
 
-export default function Card({ id, name }: CardProps) {
+export default function Card({ id, name, removeCard }: CardProps) {
   const hearts = Array.from({ length: 6 }).map((_, index) => ({
     id: index,
     offsetX: Math.random() * 100 - 70,
@@ -23,6 +36,18 @@ export default function Card({ id, name }: CardProps) {
   }));
   const liked = useSharedValue(0);
   const swiped = useSharedValue(0);
+  const entryAnim = useSharedValue(20); // start 20px lower
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    entryAnim.value = withTiming(0, { duration: 300 });
+    opacity.value = withTiming(1, { duration: 300 });
+  }, [id]);
+
+  const entryStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: entryAnim.value }],
+    opacity: opacity.value,
+  }));
 
   const iconScale = useSharedValue(1);
   const cardScale = useSharedValue(1);
@@ -41,13 +66,32 @@ export default function Card({ id, name }: CardProps) {
 
   const swipe = (id: number) => {
     return Gesture.Pan()
-      .onEnd((e) => {
-        if (e.velocityX >= 200) {
-          swiped.value = 1;
+      .onUpdate((e) => {
+        // Real-time animation during swipe
+        const progress = Math.min(Math.abs(e.translationX) / 200, 1);
+        swiped.value = progress;
+      })
+      .onEnd((e: SwipeGestureState) => {
+        if (Math.abs(e.velocityX) >= SWIPE_THRESHOLD) {
+          const direction = e.velocityX > 0 ? 1 : -1;
+          swiped.value = withTiming(
+            direction,
+            {
+              duration: SWIPE_DURATION,
+            },
+            (finished) => {
+              if (finished) {
+                runOnJS(removeCard)(id);
+              }
+            }
+          );
+        } else {
+          // Reset if threshold not met
+          swiped.value = withTiming(0, { duration: SWIPE_DURATION });
         }
       })
-      .activeOffsetX(20)
-      .failOffsetY([-25, 25]);
+      .activeOffsetX(ACTIVE_OFFSET_X)
+      .failOffsetY(FAIL_OFFSET_Y);
   };
 
   const doubleTap = Gesture.Tap()
@@ -100,7 +144,7 @@ export default function Card({ id, name }: CardProps) {
     return {
       transform: [
         {
-          translateX: swiped.value ? withTiming(400, { duration: 400 }) : 0,
+          translateX: swiped.value * 400, // Now responds to real-time swipe
         },
       ],
     };
@@ -112,8 +156,8 @@ export default function Card({ id, name }: CardProps) {
     <GestureDetector gesture={composed}>
       {/* <GestureDetector gesture={swipe(id)}> */}
       <Animated.View
-        className="relative h-80 w-52 p-10 border-2 border-gray-300 rounded-lg"
-        style={[cardStyle, swipeStyle]}
+        className="relative h-80 w-52 p-10 border-2 border-gray-300 rounded-lg opacity-0 translate-y-10"
+        style={[entryStyle, cardStyle, swipeStyle]}
       >
         <AnimatedIcon
           name="heart"
