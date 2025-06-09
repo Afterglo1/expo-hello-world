@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "co.sidebrain.testflight.learn",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Camera access is not used in this app version, but required by linked libraries."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,6 +41,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "87169169-f62c-4947-966e-6e14f6fc639b"
+      }
+    },
+    "owner": "snh99"
   }
 }
