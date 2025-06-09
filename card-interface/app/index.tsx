@@ -10,6 +10,7 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Chat from "@/components/Chat";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const data = [
   {
@@ -55,36 +56,46 @@ const data = [
 ];
 
 const App = () => {
-  const [swipedList, setSwipedList] = useState<number[] | []>([]);
-  const pan = useRef(new Animated.ValueXY()).current;
+  const [cardList, setCardList] =
+    useState<{ id: number; first_name: string }[]>(data);
+  // const pan = useRef(new Animated.ValueXY()).current;
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
-        useNativeDriver: false,
-      }),
-      onPanResponderRelease: () => {
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false,
-        }).start();
-        // pan.extractOffset();
-      },
-    })
-  ).current;
+  // const panResponder = useRef(
+  //   PanResponder.create({
+  //     onMoveShouldSetPanResponder: () => true,
+  //     onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+  //       useNativeDriver: false,
+  //     }),
+  //     onPanResponderRelease: () => {
+  //       Animated.spring(pan, {
+  //         toValue: { x: 0, y: 0 },
+  //         useNativeDriver: false,
+  //       }).start();
+  //       // pan.extractOffset();
+  //     },
+  //   })
+  // ).current;
 
+  const handleSwipe = (id: number) => {
+    const updatedList = cardList.filter((item) => item.id !== id);
+    setCardList(updatedList);
+  };
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
+          <ThemeToggle />
           <FlatList
             className="flex-1 w-full"
             contentContainerStyle={{ alignItems: "center" }}
-            data={data}
-            renderItem={({ item }) => (
+            data={cardList}
+            renderItem={({ item, index }) => (
               <View className="my-10">
-                <Card id={item.id} name={item.first_name} />
+                <Card
+                  id={item.id}
+                  name={item.first_name}
+                  removeCard={handleSwipe}
+                />
               </View>
             )}
           />
