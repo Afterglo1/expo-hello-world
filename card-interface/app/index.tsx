@@ -5,59 +5,18 @@ import {
   StyleSheet,
   PanResponder,
   FlatList,
+  Touchable,
+  Pressable,
+  Text,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Chat from "@/components/Chat";
 import ThemeToggle from "@/components/ThemeToggle";
-
-const data = [
-  {
-    id: 1,
-    first_name: "Aldric",
-  },
-  {
-    id: 2,
-    first_name: "Minta",
-  },
-  {
-    id: 3,
-    first_name: "Papagena",
-  },
-  {
-    id: 4,
-    first_name: "Lucio",
-  },
-  {
-    id: 5,
-    first_name: "Querida",
-  },
-  {
-    id: 6,
-    first_name: "Tiffie",
-  },
-  {
-    id: 7,
-    first_name: "Georgie",
-  },
-  {
-    id: 8,
-    first_name: "Sayer",
-  },
-  {
-    id: 9,
-    first_name: "Demetre",
-  },
-  {
-    id: 10,
-    first_name: "Elijah",
-  },
-];
+import { Link } from "expo-router";
 
 const App = () => {
-  const [cardList, setCardList] =
-    useState<{ id: number; first_name: string }[]>(data);
   // const pan = useRef(new Animated.ValueXY()).current;
 
   // const panResponder = useRef(
@@ -76,30 +35,16 @@ const App = () => {
   //   })
   // ).current;
 
-  const handleSwipe = (id: number) => {
-    const updatedList = cardList.filter((item) => item.id !== id);
-    setCardList(updatedList);
-  };
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
           <ThemeToggle />
-          <FlatList
-            className="flex-1 w-full"
-            contentContainerStyle={{ alignItems: "center" }}
-            data={cardList}
-            renderItem={({ item, index }) => (
-              <View className="my-10">
-                <Card
-                  id={item.id}
-                  name={item.first_name}
-                  removeCard={handleSwipe}
-                />
-              </View>
-            )}
-          />
-          <Chat />
+          <Pressable className="my-2 p-2 bg-slate-400  rounded-md">
+            <Link asChild href={"/feeds"}>
+              <Text className="text-white ">Go To Chats</Text>
+            </Link>
+          </Pressable>
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
