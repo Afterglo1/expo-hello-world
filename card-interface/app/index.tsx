@@ -45,6 +45,11 @@ const App = () => {
               <Text className="text-white ">Go To Chats</Text>
             </Link>
           </Pressable>
+          <Pressable className="my-2 p-2 bg-slate-400  rounded-md">
+            <Link asChild href={"/voice"}>
+              <Text className="text-white ">Go To Recorder</Text>
+            </Link>
+          </Pressable>
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
