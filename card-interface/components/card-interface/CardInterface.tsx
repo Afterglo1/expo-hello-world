@@ -53,8 +53,9 @@ export default function CardInterface() {
     const updatedList = cardList.filter((item) => item.id !== id);
     setCardList(updatedList);
   };
+
   return (
-    <View>
+    <View className="flex-1">
       <FlatList
         className="flex-1 w-full"
         contentContainerStyle={{ alignItems: "center" }}
