@@ -15,14 +15,18 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Camera access is not used in this app version, but required by linked libraries.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record audio.",
-        "UIBackgroundModes": ["audio", "fetch"]
+        "UIBackgroundModes": [
+          "audio",
+          "fetch"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "co.sidebrain.testflight.learn"
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +43,10 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
