@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Pressable, Text } from "react-native";
+import { View } from "react-native";
 import {
   Audio,
   AVPlaybackStatusSuccess,
@@ -7,17 +7,18 @@ import {
   InterruptionModeIOS,
   AVPlaybackSource,
 } from "expo-av";
-import { Ionicons } from "@expo/vector-icons";
+import { Vibration } from "react-native";
 import Animated, {
-  useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
-  Easing,
   withSequence,
+  useAnimatedStyle,
 } from "react-native-reanimated";
+import { PlaybackControls } from "@/components/recorder/PlaybackControls";
+import { RecordingButton } from "@/components/recorder/RecordingButton";
+import { SampleMusicPlayer } from "@/components/recorder/SampleMusicPlayer";
 import { transcribeAudio } from "@/api/voice-transcript";
-import { Vibration } from "react-native";
 
 const startSound = require("@/assets/sounds/start.mp3");
 const stopSound = require("@/assets/sounds/stop.mp3");
@@ -39,6 +40,16 @@ export default function VoiceRecorder() {
   // Add new animation value for the wave
   const waveScale = useSharedValue(1);
   const waveOpacity = useSharedValue(0.5);
+
+  // Add new state for track duration
+  const [duration, setDuration] = useState<number>(0);
+  const [isSeeking, setIsSeeking] = useState(false);
+
+  // Add new state for playback status
+  const [playbackStatus, setPlaybackStatus] = useState<{
+    positionMillis: number;
+    durationMillis: number;
+  }>({ positionMillis: 0, durationMillis: 0 });
 
   // Update metering during recording
   useEffect(() => {
@@ -113,20 +124,6 @@ export default function VoiceRecorder() {
     }
   }, [isPlaying]);
 
-  const playEffect = async (soundPath: any): Promise<void> => {
-    return new Promise((resolve) => {
-      Audio.Sound.createAsync(soundPath).then(({ sound }) => {
-        sound.playAsync();
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if ((status as AVPlaybackStatusSuccess).didJustFinish) {
-            sound.unloadAsync();
-            resolve();
-          }
-        });
-      });
-    });
-  };
-
   const startRecording = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
@@ -174,57 +171,74 @@ export default function VoiceRecorder() {
   };
 
   const playSound = async (music?: AVPlaybackSource) => {
-    // if (!recordedUri) return;
-
-    // If playing already store the playback position and stop the music
     if (soundRef.current && isPlaying) {
       const { positionMillis } =
         (await soundRef.current.getStatusAsync()) as AVPlaybackStatusSuccess;
       await soundRef.current.stopAsync();
       setPlaybackPosition(positionMillis);
-      // soundRef.current = null;
       setIsPlaying(false);
-      // console.log("INFO =>", `STOP`, positionMillis);
       return;
     }
 
-    //  if not playing and was stopped playing between then start from where it stopped.
     if (soundRef.current && !isPlaying) {
-      // console.log("INFO =>", `CONTINUE`, playbackPosition);
       await soundRef.current.setStatusAsync({
         positionMillis: playbackPosition,
         shouldPlay: true,
       });
-
       setIsPlaying(true);
       return;
     }
 
-    // console.log("INFO =>", `play first time`);
-
-    // const { sound } = await Audio.Sound.createAsync({ uri: recordedUri });
-    let newSound: Audio.Sound;
-    if (!!music) {
-      const { sound } = await Audio.Sound.createAsync(music);
-      newSound = sound;
-    } else {
-      const { sound } = await Audio.Sound.createAsync({
-        uri: recordedUri as string,
-      });
-      newSound = sound;
-    }
-    soundRef.current = newSound;
-    setSound(newSound);
-    setIsPlaying(true);
-    await newSound.playAsync();
-
-    newSound.setOnPlaybackStatusUpdate((status) => {
-      if ((status as AVPlaybackStatusSuccess).didJustFinish) {
-        setIsPlaying(false);
-        newSound.unloadAsync();
-        soundRef.current = null;
+    try {
+      let newSound: Audio.Sound;
+      if (!!music) {
+        const { sound } = await Audio.Sound.createAsync(music);
+        newSound = sound;
+      } else {
+        const { sound } = await Audio.Sound.createAsync({
+          uri: recordedUri as string,
+        });
+        newSound = sound;
       }
-    });
+
+      // Get initial status
+      const status =
+        (await newSound.getStatusAsync()) as AVPlaybackStatusSuccess;
+      if (status.isLoaded) {
+        setPlaybackStatus({
+          positionMillis: 0,
+          durationMillis: status.durationMillis || 0,
+        });
+      }
+
+      soundRef.current = newSound;
+      setSound(newSound);
+      setIsPlaying(true);
+      await newSound.playAsync();
+
+      // Set up more frequent status updates
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded) {
+          if (!isSeeking) {
+            setPlaybackStatus({
+              positionMillis: status.positionMillis,
+              durationMillis: status.durationMillis as number,
+            });
+            setPlaybackPosition(status.positionMillis);
+          }
+
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setPlaybackPosition(0);
+            setPlaybackStatus((prev) => ({ ...prev, positionMillis: 0 }));
+            newSound.unloadAsync();
+            soundRef.current = null;
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
   };
 
   const stopSoundPlay = async () => {
@@ -240,97 +254,55 @@ export default function VoiceRecorder() {
     await transcribeAudio(recordedUri as string);
   };
 
-  const waveStyles = waveHeights.map((height, index) =>
-    useAnimatedStyle(() => ({
-      height: height.value,
-      opacity: waveOpacities[index].value,
-    }))
-  );
-
-  const playbackStyle = useAnimatedStyle(() => ({
-    opacity: playbackOpacity.value,
-  }));
-
   // Add new animated style for the wave
   const waveStyle = useAnimatedStyle(() => ({
     transform: [{ scale: waveScale.value }],
     opacity: waveOpacity.value,
   }));
 
+  // Optimize seek handling
+  const handleSeek = async (value: number) => {
+    if (soundRef.current) {
+      setIsSeeking(true);
+      setPlaybackStatus((prev) => ({ ...prev, positionMillis: value }));
+      setPlaybackPosition(value);
+    }
+  };
+
+  const handleSeekComplete = async (value: number) => {
+    if (soundRef.current) {
+      try {
+        await soundRef.current.setPositionAsync(value);
+        setIsSeeking(false);
+      } catch (error) {
+        console.error("Error seeking:", error);
+      }
+    }
+  };
+
   return (
     <View className="flex-1 mt-2">
-      {/* Status indicators in fixed position above buttons */}
-      <View
-        className={`flex-row justify-between items-center p-2 ${
-          isPlaying ? "bg-slate-300 text-white" : ""
-        }`}
-      >
-        <Pressable
-          onPress={() => playSound(music)}
-          className="flex-1 h-10 justify-center"
-        >
-          <Text> 1. Sample Music</Text>
-        </Pressable>
-        {isPlaying && (
-          <Pressable
-            onPress={stopSoundPlay}
-            className="w-[20px] h-[20px] rounded-full bg-red-500 justify-center items-center "
-          >
-            <Ionicons name="stop" size={10} color="white" />
-          </Pressable>
-        )}
-      </View>
+      <SampleMusicPlayer
+        isPlaying={isPlaying}
+        onPlay={() => playSound(music)}
+        onStop={stopSoundPlay}
+      />
 
-      {/* Center the recording button and add wave animation */}
-      <View className="flex-1 items-center justify-center">
-        <Animated.View
-          className="absolute w-[100px] h-[100px] rounded-full bg-sky-200"
-          style={waveStyle}
-        />
-        <Pressable
-          className={`w-[50px] h-[50px] rounded-full justify-center items-center ${
-            recording ? "bg-red-500" : "bg-blue-500"
-          }`}
-          onPress={recording ? stopRecording : startRecording}
-        >
-          <Ionicons name="mic" size={24} color="white" />
-        </Pressable>
-      </View>
-      <View className="flex gap-2 absolute bottom-0 w-full left-0  p-4 mb-4">
-        {isPlaying && !recording && (
-          <Animated.View
-            className="flex-row items-center gap-1 justify-center p-2"
-            style={playbackStyle}
-          >
-            <View className="w-[3px] h-[20px] bg-green-500 rounded-sm" />
-            <View className="w-[3px] h-[30px] bg-green-500 rounded-sm" />
-            <View className="w-[3px] h-[20px] bg-green-500 rounded-sm" />
-            <Text className="text-green-500 text-base ml-2">Playing...</Text>
-          </Animated.View>
-        )}
-        <View className=" flex-row justify-center gap-2">
-          <Pressable
-            className="w-[40px] h-[40px] rounded-full bg-green-500 justify-center items-center"
-            onPress={() => playSound()}
-          >
-            {isPlaying ? (
-              <Ionicons name="pause" size={20} color="white" />
-            ) : (
-              <Ionicons name="play" size={20} color="white" />
-            )}
-          </Pressable>
-          {
-            <Pressable
-              className={`w-[40px] h-[40px] rounded-full bg-red-500 justify-center items-center  ${
-                isPlaying || playbackPosition > 0 ? "block" : "invisible"
-              }`}
-              onPress={stopSoundPlay}
-            >
-              <Ionicons name="stop" size={20} color="white" />
-            </Pressable>
-          }
-        </View>
-      </View>
+      <RecordingButton
+        isRecording={!!recording}
+        waveStyle={waveStyle}
+        onPress={recording ? stopRecording : startRecording}
+      />
+
+      <PlaybackControls
+        isPlaying={isPlaying}
+        playbackStatus={playbackStatus}
+        playbackOpacity={playbackOpacity}
+        onPlayPause={() => playSound()}
+        onStop={stopSoundPlay}
+        onSeek={handleSeek}
+        onSeekComplete={handleSeekComplete}
+      />
     </View>
   );
 }
