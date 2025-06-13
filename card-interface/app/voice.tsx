@@ -17,6 +17,7 @@ import Animated, {
   withSequence,
 } from "react-native-reanimated";
 import { transcribeAudio } from "@/api/voice-transcript";
+import { Vibration } from "react-native";
 
 const startSound = require("@/assets/sounds/start.mp3");
 const stopSound = require("@/assets/sounds/stop.mp3");
@@ -124,8 +125,10 @@ export default function VoiceRecorder() {
           Audio.RecordingOptionsPresets.HIGH_QUALITY
         );
 
-        await playEffect(startSound).then(() => recording.startAsync());
+        Vibration.vibrate(100);
 
+        // await playEffect(startSound).then(() => recording.startAsync());
+        await recording.startAsync();
         setRecording(recording);
       }
     } catch (err) {
@@ -141,14 +144,9 @@ export default function VoiceRecorder() {
       const uri = recording.getURI();
       setRecordedUri(uri);
       setRecording(null);
-      if (isDoneRecording) {
-        alert(
-          `Recording successful.\nDuration : ${Math.floor(
-            durationMillis / 1000
-          )} s`
-        );
-      }
-      await playEffect(stopSound);
+
+      // await playEffect(startSound);
+      Vibration.vibrate(100);
     } catch (err) {
       console.error("Failed to stop recording", err);
     }
@@ -233,14 +231,17 @@ export default function VoiceRecorder() {
   }));
 
   return (
-    <View className="flex-1  p-5">
+    <View className="flex-1 mt-2">
       {/* Status indicators in fixed position above buttons */}
       <View
-        className={`flex-row p-4 justify-between ${
-          isPlaying ? "bg-slate-200 text-white" : ""
+        className={`flex-row justify-between items-center p-2 ${
+          isPlaying ? "bg-slate-300 text-white" : ""
         }`}
       >
-        <Pressable onPress={() => playSound(music)} className="flex-1 ">
+        <Pressable
+          onPress={() => playSound(music)}
+          className="flex-1 h-10 justify-center"
+        >
           <Text> 1. Sample Music</Text>
         </Pressable>
         {isPlaying && (
@@ -252,30 +253,16 @@ export default function VoiceRecorder() {
           </Pressable>
         )}
       </View>
-      <View className="h-[40px] mb-4 justify-center items-center">
-        {recording && (
-          <View className="flex-row items-center gap-1">
-            {waveStyles.map((style, index) => (
-              <Animated.View
-                key={index}
-                className="w-[3px] bg-blue-500 rounded-sm"
-                style={style}
-              />
-            ))}
-            <Text className="text-blue-500 text-base ml-2">Recording...</Text>
-          </View>
-        )}
-      </View>
 
       {/* Buttons in fixed position below */}
-      <View className="flex-row items-center justify-center gap-5">
+      <View className="flex-row items-center justify-center gap-5 flex-1">
         <Pressable
           className={`w-[50px] h-[50px] rounded-full justify-center items-center ${
             recording ? "bg-red-500" : "bg-blue-500"
           }`}
           onPress={recording ? stopRecording : startRecording}
         >
-          <Ionicons name={recording ? "stop" : "mic"} size={24} color="white" />
+          <Ionicons name="mic" size={24} color="white" />
         </Pressable>
       </View>
       <View className="flex gap-2 absolute bottom-0 w-full left-0  p-4 mb-4">
@@ -292,23 +279,23 @@ export default function VoiceRecorder() {
         )}
         <View className=" flex-row justify-center gap-2">
           <Pressable
-            className="w-[50px] h-[50px] rounded-full bg-green-500 justify-center items-center"
+            className="w-[40px] h-[40px] rounded-full bg-green-500 justify-center items-center"
             onPress={() => playSound()}
           >
             {isPlaying ? (
-              <Ionicons name="pause" size={24} color="white" />
+              <Ionicons name="pause" size={20} color="white" />
             ) : (
-              <Ionicons name="play" size={24} color="white" />
+              <Ionicons name="play" size={20} color="white" />
             )}
           </Pressable>
           {
             <Pressable
-              className={`w-[50px] h-[50px] rounded-full bg-red-500 justify-center items-center  ${
+              className={`w-[40px] h-[40px] rounded-full bg-red-500 justify-center items-center  ${
                 isPlaying || playbackPosition > 0 ? "block" : "invisible"
               }`}
               onPress={stopSoundPlay}
             >
-              <Ionicons name="stop" size={24} color="white" />
+              <Ionicons name="stop" size={20} color="white" />
             </Pressable>
           }
         </View>
