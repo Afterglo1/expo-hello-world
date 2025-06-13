@@ -36,24 +36,45 @@ export default function VoiceRecorder() {
   const waveOpacities = Array.from({ length: 5 }, () => useSharedValue(0.5));
   const playbackOpacity = useSharedValue(0.5);
 
+  // Add new animation value for the wave
+  const waveScale = useSharedValue(1);
+  const waveOpacity = useSharedValue(0.5);
+
   // Update metering during recording
   useEffect(() => {
     let interval: number;
     if (recording) {
+      // Start the wave animation
+      waveScale.value = withRepeat(
+        withSequence(
+          withTiming(1.2, { duration: 1000 }),
+          withTiming(1, { duration: 1000 })
+        ),
+        -1,
+        true
+      );
+      waveOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.8, { duration: 1000 }),
+          withTiming(0.3, { duration: 1000 })
+        ),
+        -1,
+        true
+      );
+
       interval = setInterval(async () => {
         const status = await recording.getStatusAsync();
         if (status.isRecording) {
-          // Update each wave with different heights based on metering
-          waveHeights.forEach((height, index) => {
-            const baseHeight = Math.max(
-              10,
-              Math.min(60, 10 + Math.abs(status.metering || 0) / 2)
-            );
-            const offset = index * 5; // Stagger the heights
-            height.value = withTiming(baseHeight + offset, { duration: 100 });
-          });
+          // Update wave scale based on metering
+          const meteringValue = Math.abs(status.metering || 0);
+          const scaleValue = 1 + meteringValue / 80;
+          waveScale.value = withTiming(scaleValue, { duration: 100 });
         }
       }, 100);
+    } else {
+      // Reset wave animation when not recording
+      waveScale.value = withTiming(1);
+      waveOpacity.value = withTiming(0);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -230,6 +251,12 @@ export default function VoiceRecorder() {
     opacity: playbackOpacity.value,
   }));
 
+  // Add new animated style for the wave
+  const waveStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: waveScale.value }],
+    opacity: waveOpacity.value,
+  }));
+
   return (
     <View className="flex-1 mt-2">
       {/* Status indicators in fixed position above buttons */}
@@ -254,8 +281,12 @@ export default function VoiceRecorder() {
         )}
       </View>
 
-      {/* Buttons in fixed position below */}
-      <View className="flex-row items-center justify-center gap-5 flex-1">
+      {/* Center the recording button and add wave animation */}
+      <View className="flex-1 items-center justify-center">
+        <Animated.View
+          className="absolute w-[100px] h-[100px] rounded-full bg-sky-200"
+          style={waveStyle}
+        />
         <Pressable
           className={`w-[50px] h-[50px] rounded-full justify-center items-center ${
             recording ? "bg-red-500" : "bg-blue-500"
