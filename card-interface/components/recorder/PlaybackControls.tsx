@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable, Text } from "react-native";
+import { View, Pressable, Text, GestureResponderEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import Slider from "@react-native-community/slider";
@@ -50,6 +50,16 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     onSpeedChange(speeds[nextIndex]);
   };
 
+  const handleTrackPress = (e: GestureResponderEvent) => {
+    const { locationX } = e.nativeEvent;
+    e.currentTarget.measure((x, y, width) => {
+      const percentage = locationX / width;
+      const newPosition = percentage * playbackStatus.durationMillis;
+      onSeek(newPosition);
+      onSeekComplete(newPosition);
+    });
+  };
+
   return (
     <View className="flex gap-2 absolute bottom-0 w-full left-0 p-4 mb-4">
       {isPlaying && (
@@ -72,6 +82,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             minimumTrackTintColor="#3b82f6"
             maximumTrackTintColor="#e5e7eb"
             thumbTintColor="#3b82f6"
+            onTouchStart={handleTrackPress}
           />
         </View>
       )}
