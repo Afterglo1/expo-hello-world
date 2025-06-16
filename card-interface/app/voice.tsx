@@ -221,11 +221,12 @@ export default function VoiceRecorder() {
       newSound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded) {
           if (!isSeeking) {
-            setPlaybackStatus({
-              positionMillis: status.positionMillis,
-              durationMillis: status.durationMillis as number,
-            });
-            setPlaybackPosition(status.positionMillis);
+            if (status.isPlaying) {
+              setPlaybackStatus({
+                positionMillis: status.positionMillis,
+                durationMillis: status.durationMillis as number,
+              });
+            }
           }
 
           if (status.didJustFinish) {
@@ -238,6 +239,9 @@ export default function VoiceRecorder() {
         }
       });
     } catch (error) {
+      alert(
+        "No audio available, Please select the sample music or record an audio"
+      );
       console.error("Error playing sound:", error);
     }
   };
@@ -248,14 +252,15 @@ export default function VoiceRecorder() {
       soundRef.current = null;
       setIsPlaying(false);
       setPlaybackPosition(0);
+      setPlaybackStatus({ durationMillis: 0, positionMillis: 0 });
     }
   };
 
   const handleSpeedChange = async (speed: number) => {
+    setPlaybackSpeed(speed);
     if (!isPlaying || !soundRef.current) return;
     try {
       await soundRef.current.setRateAsync(speed, true);
-      setPlaybackSpeed(speed);
     } catch (error) {
       console.error("Error changing playback speed:", error);
     }
