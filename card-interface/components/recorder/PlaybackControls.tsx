@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Pressable, Text, GestureResponderEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
@@ -60,43 +60,35 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     });
   };
 
+  useEffect(() => {
+    onSpeedChange(currentSpeed);
+  }, [isPlaying]);
+
   return (
     <View className="flex gap-2 absolute bottom-0 w-full left-0 p-4 mb-4">
-      {isPlaying && (
-        <View className="w-full px-2">
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-gray-600 text-xs">
-              {formatTime(playbackStatus.positionMillis)}
-            </Text>
-            <Text className="text-gray-600 text-xs">
-              {formatTime(playbackStatus.durationMillis)}
-            </Text>
-          </View>
-          <Slider
-            style={{ width: "100%", height: 40 }}
-            minimumValue={0}
-            maximumValue={playbackStatus.durationMillis || 1}
-            value={playbackStatus.positionMillis}
-            onValueChange={onSeek}
-            onSlidingComplete={onSeekComplete}
-            minimumTrackTintColor="#3b82f6"
-            maximumTrackTintColor="#e5e7eb"
-            thumbTintColor="#3b82f6"
-            onTouchStart={handleTrackPress}
-          />
+      <View className="w-full px-2">
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-gray-600 text-xs">
+            {formatTime(playbackStatus.positionMillis)}
+          </Text>
+          <Text className="text-gray-600 text-xs">
+            {formatTime(playbackStatus.durationMillis)}
+          </Text>
         </View>
-      )}
-      {isPlaying && (
-        <Animated.View
-          className="flex-row items-center gap-1 justify-center p-2"
-          style={playbackStyle}
-        >
-          <View className="w-[3px] h-[20px] bg-green-500 rounded-sm" />
-          <View className="w-[3px] h-[30px] bg-green-500 rounded-sm" />
-          <View className="w-[3px] h-[20px] bg-green-500 rounded-sm" />
-          <Text className="text-green-500 text-base ml-2">Playing...</Text>
-        </Animated.View>
-      )}
+        <Slider
+          style={{ width: "100%", height: 40 }}
+          minimumValue={0}
+          maximumValue={playbackStatus.durationMillis || 1}
+          value={playbackStatus.positionMillis}
+          onValueChange={onSeek}
+          onSlidingComplete={onSeekComplete}
+          minimumTrackTintColor="#3b82f6"
+          maximumTrackTintColor="#e5e7eb"
+          thumbTintColor="#3b82f6"
+          onTouchStart={handleTrackPress}
+        />
+      </View>
+
       <View className="flex-row justify-center gap-2">
         <Pressable
           className="w-[40px] h-[40px] rounded-full bg-green-500 justify-center items-center"
@@ -116,14 +108,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         >
           <Ionicons name="stop" size={20} color="white" />
         </Pressable>
-        {isPlaying && (
-          <Pressable
-            className="w-[40px] h-[40px] rounded-full bg-blue-500 justify-center items-center"
-            onPress={handleSpeedPress}
-          >
-            <Text className="text-white font-bold">{currentSpeed}x</Text>
-          </Pressable>
-        )}
+        <Pressable
+          className="w-[40px] h-[40px] rounded-full bg-blue-500 justify-center items-center"
+          onPress={handleSpeedPress}
+        >
+          <Text className="text-white font-bold">{currentSpeed}x</Text>
+        </Pressable>
       </View>
     </View>
   );
