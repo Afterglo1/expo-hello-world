@@ -15,6 +15,8 @@ interface PlaybackControlsProps {
   onStop: () => void;
   onSeek: (value: number) => void;
   onSeekComplete: (value: number) => void;
+  onSpeedChange: (speed: number) => void;
+  currentSpeed: number;
 }
 
 export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
@@ -25,6 +27,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   onStop,
   onSeek,
   onSeekComplete,
+  onSpeedChange,
+  currentSpeed,
 }) => {
   const playbackStyle = useAnimatedStyle(() => ({
     opacity: playbackOpacity.value,
@@ -36,6 +40,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const speeds = [0.5, 1, 1.5, 2];
+
+  const handleSpeedPress = () => {
+    const currentIndex = speeds.indexOf(currentSpeed);
+    const nextIndex = (currentIndex + 1) % speeds.length;
+    onSpeedChange(speeds[nextIndex]);
   };
 
   return (
@@ -93,6 +105,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         >
           <Ionicons name="stop" size={20} color="white" />
         </Pressable>
+        {isPlaying && (
+          <Pressable
+            className="w-[40px] h-[40px] rounded-full bg-blue-500 justify-center items-center"
+            onPress={handleSpeedPress}
+          >
+            <Text className="text-white font-bold">{currentSpeed}x</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

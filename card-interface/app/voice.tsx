@@ -31,6 +31,7 @@ export default function VoiceRecorder() {
   const [isPlaying, setIsPlaying] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
   const [playbackPosition, setPlaybackPosition] = useState<number>(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
 
   // Animation values for waves
   const waveHeights = Array.from({ length: 5 }, () => useSharedValue(10));
@@ -250,6 +251,16 @@ export default function VoiceRecorder() {
     }
   };
 
+  const handleSpeedChange = async (speed: number) => {
+    if (!isPlaying || !soundRef.current) return;
+    try {
+      await soundRef.current.setRateAsync(speed, true);
+      setPlaybackSpeed(speed);
+    } catch (error) {
+      console.error("Error changing playback speed:", error);
+    }
+  };
+
   const handleAudioTranscribe = async () => {
     await transcribeAudio(recordedUri as string);
   };
@@ -302,6 +313,8 @@ export default function VoiceRecorder() {
         onStop={stopSoundPlay}
         onSeek={handleSeek}
         onSeekComplete={handleSeekComplete}
+        onSpeedChange={handleSpeedChange}
+        currentSpeed={playbackSpeed}
       />
     </View>
   );
