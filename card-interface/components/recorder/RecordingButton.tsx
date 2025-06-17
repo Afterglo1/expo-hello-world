@@ -15,9 +15,9 @@ export const RecordingButton: React.FC<RecordingButtonProps> = ({
   onPress,
 }) => {
   return (
-    <View className="flex-1 items-center justify-center">
+    <View className="flex-1 items-center pt-32 shrink-0">
       <Animated.View
-        className="absolute w-[100px] h-[100px] rounded-full bg-sky-200"
+        className="absolute top-28 w-[70px] h-[70px] rounded-full bg-sky-200 "
         style={waveStyle}
       />
       <Pressable
