@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { View, Alert } from "react-native";
 import {
   Audio,
@@ -23,43 +23,62 @@ import { RecordingsList } from "@/components/recorder/RecordingsList";
 import { TitleInputModal } from "@/components/recorder/TitleInputModal";
 import { useRecordings } from "@/hooks/useRecordings";
 import { Recording } from "@/types/recording";
+import {
+  recordingReducer,
+  initialRecordingState,
+} from "@/reducers/recordingReducer";
+import {
+  playbackReducer,
+  initialPlaybackState,
+} from "@/reducers/playbackReducer";
 
 const music = require("@/assets/sounds/music.mp3");
 
 export default function VoiceRecorder() {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [recordedUri, setRecordedUri] = useState<string | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const [playbackPosition, setPlaybackPosition] = useState<number>(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [recordingTitle, setRecordingTitle] = useState("");
-  const [isTitleModalVisible, setIsTitleModalVisible] = useState(false);
+  const [recordingState, recordingDispatch] = useReducer(
+    recordingReducer,
+    initialRecordingState
+  );
+  const [playbackState, playbackDispatch] = useReducer(
+    playbackReducer,
+    initialPlaybackState
+  );
 
+  // Destructure recording state
+  const {
+    recording,
+    recordedUri,
+    recordingTitle,
+    isTitleModalVisible,
+    recordingDuration,
+  } = recordingState;
+
+  // Destructure playback state
+  const {
+    isPlaying,
+    playbackPosition,
+    playbackSpeed,
+    isSeeking,
+    playbackStatus: { positionMillis, durationMillis },
+  } = playbackState;
+
+  // Sound reference
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  // Animation values
+  const waveScale = useSharedValue(1);
+  const waveOpacity = useSharedValue(0.5);
+  const playbackOpacity = useSharedValue(0.5);
+
+  // Custom hooks
   const { recordings, saveRecording, deleteRecording } = useRecordings();
 
   // Animation values for waves
   const waveHeights = Array.from({ length: 5 }, () => useSharedValue(10));
   const waveOpacities = Array.from({ length: 5 }, () => useSharedValue(0.5));
-  const playbackOpacity = useSharedValue(0.5);
-
-  // Add new animation value for the wave
-  const waveScale = useSharedValue(1);
-  const waveOpacity = useSharedValue(0.5);
 
   // Add new state for track duration
   const [duration, setDuration] = useState<number>(0);
-  const [isSeeking, setIsSeeking] = useState(false);
-
-  // Add new state for playback status
-  const [playbackStatus, setPlaybackStatus] = useState<{
-    positionMillis: number;
-    durationMillis: number;
-  }>({ positionMillis: 0, durationMillis: 0 });
-
-  // Add new state for recording duration
-  const [recordingDuration, setRecordingDuration] = useState<number>(0);
 
   // Update metering during recording
   useEffect(() => {
@@ -84,7 +103,7 @@ export default function VoiceRecorder() {
       );
 
       interval = setInterval(async () => {
-        const status = await recording.getStatusAsync();
+        const status = await (recording as Audio.Recording).getStatusAsync();
         if (status.isRecording) {
           // Update wave scale based on metering
           const meteringValue = Math.abs(status.metering || 0);
@@ -137,29 +156,27 @@ export default function VoiceRecorder() {
   const startRecording = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
-      if (recording) return;
-      if (granted) {
-        await stopSoundPlay();
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-        const recording = new Audio.Recording();
-        await recording.prepareToRecordAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-        );
+      if (recording || !granted) return;
 
-        Vibration.vibrate(100);
+      await stopSoundPlay();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
 
-        // await playEffect(startSound).then(() => recording.startAsync());
-        await recording.startAsync();
-        setRecording(recording);
-      }
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      await newRecording.startAsync();
+
+      recordingDispatch({ type: "START_RECORDING", payload: newRecording });
+      Vibration.vibrate(100);
     } catch (err) {
       console.error("Failed to start recording", err);
     }
@@ -170,27 +187,26 @@ export default function VoiceRecorder() {
       if (!recording) return;
       const { durationMillis } = await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
-      setRecordedUri(uri);
-      setRecording(null);
+
+      if (!uri) throw new Error("Failed to get recording URI");
+
+      recordingDispatch({
+        type: "STOP_RECORDING",
+        payload: { uri, duration: durationMillis || 0 },
+      });
+      recordingDispatch({ type: "SET_TITLE_MODAL_VISIBLE", payload: true });
       Vibration.vibrate(100);
-
-      // Store the duration in state
-      setRecordingDuration(durationMillis);
-
-      setIsTitleModalVisible(true);
     } catch (err) {
       console.error("Failed to stop recording", err);
+      recordingDispatch({ type: "RESET_RECORDING" });
     }
   };
 
   const playSound = async (music?: AVPlaybackSource) => {
-    if (!!!music) {
+    if (!music) {
       if (soundRef.current && isPlaying) {
-        const { positionMillis } =
-          (await soundRef.current.getStatusAsync()) as AVPlaybackStatusSuccess;
         await soundRef.current.stopAsync();
-        setPlaybackPosition(positionMillis);
-        setIsPlaying(false);
+        playbackDispatch({ type: "PAUSE_PLAYBACK", payload: positionMillis });
         return;
       }
 
@@ -199,7 +215,10 @@ export default function VoiceRecorder() {
           positionMillis: playbackPosition,
           shouldPlay: true,
         });
-        setIsPlaying(true);
+        playbackDispatch({
+          type: "START_PLAYBACK",
+          payload: { position: playbackPosition, duration: durationMillis },
+        });
         return;
       }
     }
@@ -209,73 +228,61 @@ export default function VoiceRecorder() {
     }
 
     try {
-      let newSound: Audio.Sound;
-      if (!!music) {
-        const { sound } = await Audio.Sound.createAsync(music);
-        newSound = sound;
-      } else {
-        const { sound } = await Audio.Sound.createAsync({
-          uri: recordedUri as string,
-        });
-        newSound = sound;
-      }
+      const { sound } = await Audio.Sound.createAsync(
+        music || { uri: recordedUri as string }
+      );
+      soundRef.current = sound;
 
-      // Get initial status
-      const status =
-        (await newSound.getStatusAsync()) as AVPlaybackStatusSuccess;
+      const status = (await sound.getStatusAsync()) as AVPlaybackStatusSuccess;
       if (status.isLoaded) {
-        setPlaybackStatus({
-          positionMillis: 0,
-          durationMillis: status.durationMillis || 0,
+        playbackDispatch({
+          type: "START_PLAYBACK",
+          payload: { position: 0, duration: status.durationMillis || 0 },
         });
-      }
+        await sound.playAsync();
 
-      soundRef.current = newSound;
-      setSound(newSound);
-      setIsPlaying(true);
-      await newSound.playAsync();
-
-      // Set up more frequent status updates
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          if (!isSeeking) {
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && !isSeeking) {
             if (status.isPlaying) {
-              setPlaybackStatus({
-                positionMillis: status.positionMillis,
-                durationMillis: status.durationMillis as number,
+              playbackDispatch({
+                type: "UPDATE_PLAYBACK_STATUS",
+                payload: {
+                  position: status.positionMillis,
+                  duration: status.durationMillis as number,
+                },
               });
             }
+            if (status.didJustFinish) {
+              playbackDispatch({ type: "STOP_PLAYBACK" });
+              sound.unloadAsync();
+              soundRef.current = null;
+            }
           }
-
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            setPlaybackPosition(0);
-            setPlaybackStatus((prev) => ({ ...prev, positionMillis: 0 }));
-            newSound.unloadAsync();
-            soundRef.current = null;
-          }
-        }
-      });
+        });
+      }
     } catch (error) {
+      console.error("Error playing sound:", error);
       alert(
         "No audio available, Please select the sample music or record an audio"
       );
-      console.error("Error playing sound:", error);
     }
   };
 
   const stopSoundPlay = async () => {
     if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      soundRef.current = null;
-      setIsPlaying(false);
-      setPlaybackPosition(0);
-      setPlaybackStatus({ durationMillis: 0, positionMillis: 0 });
+      try {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+        playbackDispatch({ type: "STOP_PLAYBACK" });
+      } catch (error) {
+        console.error("Error stopping sound:", error);
+      }
     }
   };
 
   const handleSpeedChange = async (speed: number) => {
-    setPlaybackSpeed(speed);
+    playbackDispatch({ type: "SET_PLAYBACK_SPEED", payload: speed });
     if (!isPlaying || !soundRef.current) return;
     try {
       await soundRef.current.setRateAsync(speed, true);
@@ -297,9 +304,7 @@ export default function VoiceRecorder() {
   // Optimize seek handling
   const handleSeek = async (value: number) => {
     if (soundRef.current) {
-      setIsSeeking(true);
-      setPlaybackStatus((prev) => ({ ...prev, positionMillis: value }));
-      setPlaybackPosition(value);
+      playbackDispatch({ type: "SET_SEEKING", payload: true });
     }
   };
 
@@ -307,9 +312,17 @@ export default function VoiceRecorder() {
     if (soundRef.current) {
       try {
         await soundRef.current.setPositionAsync(value);
-        setIsSeeking(false);
+        playbackDispatch({ type: "SET_SEEKING", payload: false });
+        // Update playback status
+        playbackDispatch({
+          type: "UPDATE_PLAYBACK_STATUS",
+          payload: { position: value, duration: durationMillis },
+        });
+        // Update position without affecting playing state
+        playbackDispatch({ type: "UPDATE_POSITION", payload: value });
       } catch (error) {
         console.error("Error seeking:", error);
+        playbackDispatch({ type: "SET_SEEKING", payload: false });
       }
     }
   };
@@ -329,10 +342,21 @@ export default function VoiceRecorder() {
     };
 
     await saveRecording(newRecording);
-    setRecordingTitle("");
-    setIsTitleModalVisible(false);
-    setRecordedUri(null);
-    setRecordingDuration(0);
+    recordingDispatch({ type: "RESET_RECORDING" });
+  };
+
+  // Add cleanup function for recording
+  const cleanupRecording = () => {
+    if (recording) {
+      recording.stopAndUnloadAsync().catch(console.error);
+    }
+    recordingDispatch({ type: "RESET_RECORDING" });
+  };
+
+  // Update TitleInputModal cancel handler
+  const handleCancelRecording = () => {
+    cleanupRecording();
+    recordingDispatch({ type: "SET_TITLE_MODAL_VISIBLE", payload: false });
   };
 
   return (
@@ -356,7 +380,7 @@ export default function VoiceRecorder() {
 
       <PlaybackControls
         isPlaying={isPlaying}
-        playbackStatus={playbackStatus}
+        playbackStatus={{ positionMillis, durationMillis }}
         playbackOpacity={playbackOpacity}
         onPlayPause={() => playSound()}
         onStop={stopSoundPlay}
@@ -369,13 +393,11 @@ export default function VoiceRecorder() {
       <TitleInputModal
         visible={isTitleModalVisible}
         title={recordingTitle}
-        onTitleChange={setRecordingTitle}
+        onTitleChange={(title) =>
+          recordingDispatch({ type: "SET_RECORDING_TITLE", payload: title })
+        }
         onSave={handleSaveRecording}
-        onCancel={() => {
-          setIsTitleModalVisible(false);
-          setRecordingTitle("");
-          setRecordedUri(null);
-        }}
+        onCancel={handleCancelRecording}
       />
     </View>
   );
