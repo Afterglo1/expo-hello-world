@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View } from "react-native";
+import { View, Alert } from "react-native";
 import {
   Audio,
   AVPlaybackStatusSuccess,
@@ -19,9 +19,11 @@ import { PlaybackControls } from "@/components/recorder/PlaybackControls";
 import { RecordingButton } from "@/components/recorder/RecordingButton";
 import { SampleMusicPlayer } from "@/components/recorder/SampleMusicPlayer";
 import { transcribeAudio } from "@/api/voice-transcript";
+import { RecordingsList } from "@/components/recorder/RecordingsList";
+import { TitleInputModal } from "@/components/recorder/TitleInputModal";
+import { useRecordings } from "@/hooks/useRecordings";
+import { Recording } from "@/types/recording";
 
-const startSound = require("@/assets/sounds/start.mp3");
-const stopSound = require("@/assets/sounds/stop.mp3");
 const music = require("@/assets/sounds/music.mp3");
 
 export default function VoiceRecorder() {
@@ -32,6 +34,10 @@ export default function VoiceRecorder() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const [playbackPosition, setPlaybackPosition] = useState<number>(0);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [recordingTitle, setRecordingTitle] = useState("");
+  const [isTitleModalVisible, setIsTitleModalVisible] = useState(false);
+
+  const { recordings, saveRecording, deleteRecording } = useRecordings();
 
   // Animation values for waves
   const waveHeights = Array.from({ length: 5 }, () => useSharedValue(10));
@@ -51,6 +57,9 @@ export default function VoiceRecorder() {
     positionMillis: number;
     durationMillis: number;
   }>({ positionMillis: 0, durationMillis: 0 });
+
+  // Add new state for recording duration
+  const [recordingDuration, setRecordingDuration] = useState<number>(0);
 
   // Update metering during recording
   useEffect(() => {
@@ -130,6 +139,7 @@ export default function VoiceRecorder() {
       const { granted } = await Audio.requestPermissionsAsync();
       if (recording) return;
       if (granted) {
+        await stopSoundPlay();
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
@@ -158,36 +168,44 @@ export default function VoiceRecorder() {
   const stopRecording = async () => {
     try {
       if (!recording) return;
-      const { durationMillis, isDoneRecording } =
-        await recording.stopAndUnloadAsync();
+      const { durationMillis } = await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       setRecordedUri(uri);
       setRecording(null);
-
-      // await playEffect(startSound);
       Vibration.vibrate(100);
+
+      // Store the duration in state
+      setRecordingDuration(durationMillis);
+
+      setIsTitleModalVisible(true);
     } catch (err) {
       console.error("Failed to stop recording", err);
     }
   };
 
   const playSound = async (music?: AVPlaybackSource) => {
-    if (soundRef.current && isPlaying) {
-      const { positionMillis } =
-        (await soundRef.current.getStatusAsync()) as AVPlaybackStatusSuccess;
-      await soundRef.current.stopAsync();
-      setPlaybackPosition(positionMillis);
-      setIsPlaying(false);
-      return;
+    if (!!!music) {
+      if (soundRef.current && isPlaying) {
+        const { positionMillis } =
+          (await soundRef.current.getStatusAsync()) as AVPlaybackStatusSuccess;
+        await soundRef.current.stopAsync();
+        setPlaybackPosition(positionMillis);
+        setIsPlaying(false);
+        return;
+      }
+
+      if (soundRef.current && !isPlaying) {
+        await soundRef.current.setStatusAsync({
+          positionMillis: playbackPosition,
+          shouldPlay: true,
+        });
+        setIsPlaying(true);
+        return;
+      }
     }
 
-    if (soundRef.current && !isPlaying) {
-      await soundRef.current.setStatusAsync({
-        positionMillis: playbackPosition,
-        shouldPlay: true,
-      });
-      setIsPlaying(true);
-      return;
+    if (soundRef.current) {
+      await soundRef.current.unloadAsync();
     }
 
     try {
@@ -296,12 +314,38 @@ export default function VoiceRecorder() {
     }
   };
 
+  const handleSaveRecording = async () => {
+    if (!recordedUri || !recordingTitle.trim()) {
+      Alert.alert("Error", "Please enter a title for your recording");
+      return;
+    }
+
+    const newRecording: Recording = {
+      id: Date.now().toString(),
+      title: recordingTitle.trim(),
+      uri: recordedUri,
+      duration: recordingDuration,
+      createdAt: Date.now(),
+    };
+
+    await saveRecording(newRecording);
+    setRecordingTitle("");
+    setIsTitleModalVisible(false);
+    setRecordedUri(null);
+    setRecordingDuration(0);
+  };
+
   return (
     <View className="flex-1 mt-2">
       <SampleMusicPlayer
         isPlaying={isPlaying}
         onPlay={() => playSound(music)}
         onStop={stopSoundPlay}
+      />
+      <RecordingsList
+        recordings={recordings}
+        onPlay={(uri) => playSound({ uri })}
+        onDelete={deleteRecording}
       />
 
       <RecordingButton
@@ -320,6 +364,18 @@ export default function VoiceRecorder() {
         onSeekComplete={handleSeekComplete}
         onSpeedChange={handleSpeedChange}
         currentSpeed={playbackSpeed}
+      />
+
+      <TitleInputModal
+        visible={isTitleModalVisible}
+        title={recordingTitle}
+        onTitleChange={setRecordingTitle}
+        onSave={handleSaveRecording}
+        onCancel={() => {
+          setIsTitleModalVisible(false);
+          setRecordingTitle("");
+          setRecordedUri(null);
+        }}
       />
     </View>
   );
