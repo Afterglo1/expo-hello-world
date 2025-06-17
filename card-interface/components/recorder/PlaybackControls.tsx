@@ -10,7 +10,6 @@ interface PlaybackControlsProps {
     positionMillis: number;
     durationMillis: number;
   };
-  playbackOpacity: any;
   onPlayPause: () => void;
   onStop: () => void;
   onSeek: (value: number) => void;
@@ -22,7 +21,6 @@ interface PlaybackControlsProps {
 export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   isPlaying,
   playbackStatus,
-  playbackOpacity,
   onPlayPause,
   onStop,
   onSeek,
@@ -30,10 +28,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   onSpeedChange,
   currentSpeed,
 }) => {
-  const playbackStyle = useAnimatedStyle(() => ({
-    opacity: playbackOpacity.value,
-  }));
-
   const formatTime = (milliseconds: number) => {
     if (!milliseconds) return "0:00";
     const totalSeconds = Math.floor(milliseconds / 1000);

@@ -50,7 +50,6 @@ export default function VoiceRecorder() {
   // Animation values
   const waveScale = useSharedValue(1);
   const waveOpacity = useSharedValue(0.5);
-  const playbackOpacity = useSharedValue(0.5);
 
   // Custom hooks
   const { recordings, saveRecording, deleteRecording } = useRecordings();
@@ -112,19 +111,6 @@ export default function VoiceRecorder() {
       });
     }
   }, [recording]);
-
-  // Animate playback indicator
-  useEffect(() => {
-    if (isPlaying) {
-      playbackOpacity.value = withRepeat(
-        withSequence(withTiming(1, { duration: 500 }), withTiming(0.5, { duration: 500 })),
-        -1,
-        true
-      );
-    } else {
-      playbackOpacity.value = withTiming(0.5);
-    }
-  }, [isPlaying]);
 
   const startRecording = async () => {
     try {
@@ -348,7 +334,6 @@ export default function VoiceRecorder() {
       <PlaybackControls
         isPlaying={isPlaying}
         playbackStatus={{ positionMillis, durationMillis }}
-        playbackOpacity={playbackOpacity}
         onPlayPause={() => playSound()}
         onStop={stopSoundPlay}
         onSeek={handleSeek}
