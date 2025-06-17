@@ -90,32 +90,66 @@ export default function VoiceRecorder() {
     }
   };
 
-  const playSound = async (music?: AVPlaybackSource) => {
-    if (!music) {
-      if (soundRef.current && isPlaying) {
-        await soundRef.current.stopAsync();
-        playbackDispatch({ type: "PAUSE_PLAYBACK", payload: positionMillis });
-        return;
-      }
-
-      if (soundRef.current && !isPlaying) {
-        await soundRef.current.setStatusAsync({
-          positionMillis: playbackPosition,
-          shouldPlay: true,
-        });
-        playbackDispatch({
-          type: "START_PLAYBACK",
-          payload: { position: playbackPosition, duration: durationMillis },
-        });
-        return;
-      }
+  // Handle play/pause of existing sound
+  const handleExistingSoundPlayback = async () => {
+    if (soundRef.current && isPlaying) {
+      await soundRef.current.stopAsync();
+      playbackDispatch({ type: "PAUSE_PLAYBACK", payload: positionMillis });
+      return true;
     }
 
+    if (soundRef.current && !isPlaying) {
+      await soundRef.current.setStatusAsync({
+        positionMillis: playbackPosition,
+        shouldPlay: true,
+      });
+      playbackDispatch({
+        type: "START_PLAYBACK",
+        payload: { position: playbackPosition, duration: durationMillis },
+      });
+      return true;
+    }
+
+    return false;
+  };
+
+  // Handle playback status updates
+  const setupPlaybackStatusUpdates = (sound: Audio.Sound) => {
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && !isSeeking) {
+        if (status.isPlaying) {
+          playbackDispatch({
+            type: "UPDATE_PLAYBACK_STATUS",
+            payload: {
+              position: status.positionMillis,
+              duration: status.durationMillis as number,
+            },
+          });
+        }
+        if (status.didJustFinish) {
+          playbackDispatch({ type: "STOP_PLAYBACK" });
+          sound.unloadAsync();
+          soundRef.current = null;
+        }
+      }
+    });
+  };
+
+  // Main playSound function
+  const playSound = async (music?: AVPlaybackSource) => {
+    // Handle existing sound playback
+    if (!music) {
+      const handled = await handleExistingSoundPlayback();
+      if (handled) return;
+    }
+
+    // Cleanup existing sound if any
     if (soundRef.current) {
       await soundRef.current.unloadAsync();
     }
 
     try {
+      // Create and setup new sound
       const { sound } = await Audio.Sound.createAsync(music || { uri: recordedUri as string });
       soundRef.current = sound;
 
@@ -125,26 +159,9 @@ export default function VoiceRecorder() {
           type: "START_PLAYBACK",
           payload: { position: 0, duration: status.durationMillis || 0 },
         });
-        await sound.playAsync();
 
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && !isSeeking) {
-            if (status.isPlaying) {
-              playbackDispatch({
-                type: "UPDATE_PLAYBACK_STATUS",
-                payload: {
-                  position: status.positionMillis,
-                  duration: status.durationMillis as number,
-                },
-              });
-            }
-            if (status.didJustFinish) {
-              playbackDispatch({ type: "STOP_PLAYBACK" });
-              sound.unloadAsync();
-              soundRef.current = null;
-            }
-          }
-        });
+        await sound.playAsync();
+        setupPlaybackStatusUpdates(sound);
       }
     } catch (error) {
       console.error("Error playing sound:", error);
