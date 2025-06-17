@@ -1,21 +1,11 @@
-import {
-  View,
-  Text,
-  GestureResponderEvent,
-  TextInput,
-  Pressable,
-  Modal,
-  FlatList,
-} from "react-native";
+import { View, Text, GestureResponderEvent, TextInput, Pressable, Modal, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 
 export default function Chat() {
   const [chatOpen, setChatOpen] = useState(false);
   const [inputText, setInputText] = useState<string>("");
-  const [messageList, setMessageList] = useState<
-    { user: string; system: string }[]
-  >([]);
+  const [messageList, setMessageList] = useState<{ user: string; system: string }[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   const handleInputChange = (msg: string) => {
@@ -23,10 +13,7 @@ export default function Chat() {
   };
 
   const sendMessage = () => {
-    setMessageList([
-      ...messageList,
-      { user: inputText, system: "System reply" },
-    ]);
+    setMessageList([...messageList, { user: inputText, system: "System reply" }]);
 
     setInputText("");
   };
@@ -43,13 +30,21 @@ export default function Chat() {
 
   return (
     <View className="relative w-full">
-      <Modal visible={chatOpen} animationType="slide" transparent>
+      <Modal
+        visible={chatOpen}
+        animationType="slide"
+        transparent
+      >
         <View className=" flex-1 w-full h-3/4 absolute justify-between bottom-6 bg-white box-border">
           <View className="flex-row justify-between box-border p-4 py-2 border-b border-gray-400">
             <Text className="text-xl font-semibold ">Chat</Text>
             <Pressable onPress={() => setChatOpen(false)}>
               <Text className="p-1 text-xl font-semibold">
-                <Ionicons name="close" size={24} color={"gray"} />
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={"gray"}
+                />
               </Text>
             </Pressable>
           </View>
@@ -60,13 +55,9 @@ export default function Chat() {
             data={messageList}
             renderItem={({ item: el, index }) => (
               <View key={index}>
-                <Text className=" bg-gray-200 ml-auto max-w-[70%] my-8  p-2 rounded-lg">
-                  {el.user}
-                </Text>
+                <Text className=" bg-gray-200 ml-auto max-w-[70%] my-8  p-2 rounded-lg">{el.user}</Text>
 
-                <Text className="bg-green-200 max-w-[70%]  p-2 rounded-lg">
-                  {el.system}
-                </Text>
+                <Text className="bg-green-200 max-w-[70%]  p-2 rounded-lg">{el.system}</Text>
               </View>
             )}
           />
@@ -79,7 +70,10 @@ export default function Chat() {
               onChangeText={handleInputChange}
             />
             <Pressable onPress={sendMessage}>
-              <Ionicons name="send" size={20} />
+              <Ionicons
+                name="send"
+                size={20}
+              />
             </Pressable>
           </View>
         </View>

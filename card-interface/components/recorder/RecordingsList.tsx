@@ -9,11 +9,7 @@ interface RecordingsListProps {
   onDelete: (id: string) => void;
 }
 
-export const RecordingsList: React.FC<RecordingsListProps> = ({
-  recordings,
-  onPlay,
-  onDelete,
-}) => {
+export const RecordingsList: React.FC<RecordingsListProps> = ({ recordings, onPlay, onDelete }) => {
   return (
     <View className="h-1/3">
       <FlatList

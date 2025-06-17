@@ -9,11 +9,7 @@ interface RecordingButtonProps {
   onPress: () => void;
 }
 
-export const RecordingButton: React.FC<RecordingButtonProps> = ({
-  isRecording,
-  waveStyle,
-  onPress,
-}) => {
+export const RecordingButton: React.FC<RecordingButtonProps> = ({ isRecording, waveStyle, onPress }) => {
   return (
     <View className="flex-1 items-center pt-32 shrink-0">
       <Animated.View
@@ -26,7 +22,11 @@ export const RecordingButton: React.FC<RecordingButtonProps> = ({
         }`}
         onPress={onPress}
       >
-        <Ionicons name="mic" size={24} color="white" />
+        <Ionicons
+          name="mic"
+          size={24}
+          color="white"
+        />
       </Pressable>
     </View>
   );

@@ -68,12 +68,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     <View className="flex gap-2 absolute bottom-0 w-full left-0 p-4 mb-4">
       <View className="w-full px-2">
         <View className="flex-row justify-between mb-1">
-          <Text className="text-gray-600 text-xs">
-            {formatTime(playbackStatus.positionMillis)}
-          </Text>
-          <Text className="text-gray-600 text-xs">
-            {formatTime(playbackStatus.durationMillis)}
-          </Text>
+          <Text className="text-gray-600 text-xs">{formatTime(playbackStatus.positionMillis)}</Text>
+          <Text className="text-gray-600 text-xs">{formatTime(playbackStatus.durationMillis)}</Text>
         </View>
         <Slider
           style={{ width: "100%", height: 40 }}
@@ -95,9 +91,17 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           onPress={onPlayPause}
         >
           {isPlaying ? (
-            <Ionicons name="pause" size={20} color="white" />
+            <Ionicons
+              name="pause"
+              size={20}
+              color="white"
+            />
           ) : (
-            <Ionicons name="play" size={20} color="white" />
+            <Ionicons
+              name="play"
+              size={20}
+              color="white"
+            />
           )}
         </Pressable>
         <Pressable
@@ -106,7 +110,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           }`}
           onPress={onStop}
         >
-          <Ionicons name="stop" size={20} color="white" />
+          <Ionicons
+            name="stop"
+            size={20}
+            color="white"
+          />
         </Pressable>
         <Pressable
           className="w-[40px] h-[40px] rounded-full bg-blue-500 justify-center items-center"

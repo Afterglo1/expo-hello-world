@@ -122,17 +122,9 @@ export default function Card({ id, name, removeCard }: CardProps) {
   });
 
   const cardStyle = useAnimatedStyle(() => {
-    const borderColor = interpolateColor(
-      liked.value,
-      [0, 1],
-      ["#cccdcf", "#103878"]
-    );
+    const borderColor = interpolateColor(liked.value, [0, 1], ["#cccdcf", "#103878"]);
 
-    const bgColor = interpolateColor(
-      liked.value,
-      [0, 1],
-      ["#cfd0d1", "#6795f0"]
-    );
+    const bgColor = interpolateColor(liked.value, [0, 1], ["#cfd0d1", "#6795f0"]);
 
     return {
       transform: [{ scale: cardScale.value }],
@@ -171,16 +163,15 @@ export default function Card({ id, name, removeCard }: CardProps) {
             position: "absolute",
             bottom: 10,
             right: 10,
-            transform: [
-              { translateX: anim.x.value },
-              { translateY: anim.y.value },
-              { scale: anim.scale.value },
-            ],
+            transform: [{ translateX: anim.x.value }, { translateY: anim.y.value }, { scale: anim.scale.value }],
             opacity: anim.opacity.value,
           }));
 
           return (
-            <Animated.Text key={index} style={style}>
+            <Animated.Text
+              key={index}
+              style={style}
+            >
               ❤️
             </Animated.Text>
           );

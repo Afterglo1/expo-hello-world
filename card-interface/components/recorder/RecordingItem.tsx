@@ -9,20 +9,12 @@ interface RecordingItemProps {
   onDelete: () => void;
 }
 
-export const RecordingItem: React.FC<RecordingItemProps> = ({
-  recording,
-  onPlay,
-  onDelete,
-}) => {
+export const RecordingItem: React.FC<RecordingItemProps> = ({ recording, onPlay, onDelete }) => {
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Recording",
-      "Are you sure you want to delete this recording?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", onPress: onDelete },
-      ]
-    );
+    Alert.alert("Delete Recording", "Are you sure you want to delete this recording?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", onPress: onDelete },
+    ]);
   };
 
   const formatDuration = (milliseconds: number) => {
@@ -37,23 +29,30 @@ export const RecordingItem: React.FC<RecordingItemProps> = ({
       <View className="flex-1">
         <Text className="text-lg font-semibold">{recording.title}</Text>
         <View className="flex-row items-center gap-2">
-          <Text className="text-sm text-gray-500">
-            {new Date(recording.createdAt).toLocaleString("en-GB")}
-          </Text>
-          <Text className="text-sm text-gray-500">
-            • {formatDuration(recording.duration)}
-          </Text>
+          <Text className="text-sm text-gray-500">{new Date(recording.createdAt).toLocaleString("en-GB")}</Text>
+          <Text className="text-sm text-gray-500">• {formatDuration(recording.duration)}</Text>
         </View>
       </View>
       <View className="flex-row gap-2">
-        <Pressable className="p-2 bg-blue-500 rounded-full" onPress={onPlay}>
-          <Ionicons name="play" size={20} color="white" />
+        <Pressable
+          className="p-2 bg-blue-500 rounded-full"
+          onPress={onPlay}
+        >
+          <Ionicons
+            name="play"
+            size={20}
+            color="white"
+          />
         </Pressable>
         <Pressable
           className="p-2 bg-red-500 rounded-full"
           onPress={handleDelete}
         >
-          <Ionicons name="trash" size={20} color="white" />
+          <Ionicons
+            name="trash"
+            size={20}
+            color="white"
+          />
         </Pressable>
       </View>
     </View>

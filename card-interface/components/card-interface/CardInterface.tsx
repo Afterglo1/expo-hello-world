@@ -46,8 +46,7 @@ const data = [
 ];
 
 export default function CardInterface() {
-  const [cardList, setCardList] =
-    useState<{ id: number; first_name: string }[]>(data);
+  const [cardList, setCardList] = useState<{ id: number; first_name: string }[]>(data);
 
   const handleSwipe = (id: number) => {
     const updatedList = cardList.filter((item) => item.id !== id);

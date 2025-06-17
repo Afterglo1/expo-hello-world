@@ -23,35 +23,17 @@ import { RecordingsList } from "@/components/recorder/RecordingsList";
 import { TitleInputModal } from "@/components/recorder/TitleInputModal";
 import { useRecordings } from "@/hooks/useRecordings";
 import { Recording } from "@/types/recording";
-import {
-  recordingReducer,
-  initialRecordingState,
-} from "@/reducers/recordingReducer";
-import {
-  playbackReducer,
-  initialPlaybackState,
-} from "@/reducers/playbackReducer";
+import { recordingReducer, initialRecordingState } from "@/reducers/recordingReducer";
+import { playbackReducer, initialPlaybackState } from "@/reducers/playbackReducer";
 
 const music = require("@/assets/sounds/music.mp3");
 
 export default function VoiceRecorder() {
-  const [recordingState, recordingDispatch] = useReducer(
-    recordingReducer,
-    initialRecordingState
-  );
-  const [playbackState, playbackDispatch] = useReducer(
-    playbackReducer,
-    initialPlaybackState
-  );
+  const [recordingState, recordingDispatch] = useReducer(recordingReducer, initialRecordingState);
+  const [playbackState, playbackDispatch] = useReducer(playbackReducer, initialPlaybackState);
 
   // Destructure recording state
-  const {
-    recording,
-    recordedUri,
-    recordingTitle,
-    isTitleModalVisible,
-    recordingDuration,
-  } = recordingState;
+  const { recording, recordedUri, recordingTitle, isTitleModalVisible, recordingDuration } = recordingState;
 
   // Destructure playback state
   const {
@@ -86,18 +68,12 @@ export default function VoiceRecorder() {
     if (recording) {
       // Start the wave animation
       waveScale.value = withRepeat(
-        withSequence(
-          withTiming(1.2, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
+        withSequence(withTiming(1.2, { duration: 1000 }), withTiming(1, { duration: 1000 })),
         -1,
         true
       );
       waveOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0.8, { duration: 1000 }),
-          withTiming(0.3, { duration: 1000 })
-        ),
+        withSequence(withTiming(0.8, { duration: 1000 }), withTiming(0.3, { duration: 1000 })),
         -1,
         true
       );
@@ -141,10 +117,7 @@ export default function VoiceRecorder() {
   useEffect(() => {
     if (isPlaying) {
       playbackOpacity.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 500 }),
-          withTiming(0.5, { duration: 500 })
-        ),
+        withSequence(withTiming(1, { duration: 500 }), withTiming(0.5, { duration: 500 })),
         -1,
         true
       );
@@ -170,9 +143,7 @@ export default function VoiceRecorder() {
       });
 
       const newRecording = new Audio.Recording();
-      await newRecording.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       await newRecording.startAsync();
 
       recordingDispatch({ type: "START_RECORDING", payload: newRecording });
@@ -228,9 +199,7 @@ export default function VoiceRecorder() {
     }
 
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        music || { uri: recordedUri as string }
-      );
+      const { sound } = await Audio.Sound.createAsync(music || { uri: recordedUri as string });
       soundRef.current = sound;
 
       const status = (await sound.getStatusAsync()) as AVPlaybackStatusSuccess;
@@ -262,9 +231,7 @@ export default function VoiceRecorder() {
       }
     } catch (error) {
       console.error("Error playing sound:", error);
-      alert(
-        "No audio available, Please select the sample music or record an audio"
-      );
+      alert("No audio available, Please select the sample music or record an audio");
     }
   };
 
@@ -393,9 +360,7 @@ export default function VoiceRecorder() {
       <TitleInputModal
         visible={isTitleModalVisible}
         title={recordingTitle}
-        onTitleChange={(title) =>
-          recordingDispatch({ type: "SET_RECORDING_TITLE", payload: title })
-        }
+        onTitleChange={(title) => recordingDispatch({ type: "SET_RECORDING_TITLE", payload: title })}
         onSave={handleSaveRecording}
         onCancel={handleCancelRecording}
       />
