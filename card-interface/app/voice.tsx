@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, { useReducer, useRef } from "react";
 import { View, Alert } from "react-native";
 import {
   Audio,
@@ -8,13 +8,6 @@ import {
   AVPlaybackSource,
 } from "expo-av";
 import { Vibration } from "react-native";
-import Animated, {
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSequence,
-  useAnimatedStyle,
-} from "react-native-reanimated";
 import { PlaybackControls } from "@/components/recorder/PlaybackControls";
 import { RecordingButton } from "@/components/recorder/RecordingButton";
 import { SampleMusicPlayer } from "@/components/recorder/SampleMusicPlayer";
@@ -47,70 +40,8 @@ export default function VoiceRecorder() {
   // Sound reference
   const soundRef = useRef<Audio.Sound | null>(null);
 
-  // Animation values
-  const waveScale = useSharedValue(1);
-  const waveOpacity = useSharedValue(0.5);
-
   // Custom hooks
   const { recordings, saveRecording, deleteRecording } = useRecordings();
-
-  // Animation values for waves
-  const waveHeights = Array.from({ length: 5 }, () => useSharedValue(10));
-  const waveOpacities = Array.from({ length: 5 }, () => useSharedValue(0.5));
-
-  // Add new state for track duration
-  const [duration, setDuration] = useState<number>(0);
-
-  // Update metering during recording
-  useEffect(() => {
-    let interval: number;
-    if (recording) {
-      // Start the wave animation
-      waveScale.value = withRepeat(
-        withSequence(withTiming(1.2, { duration: 1000 }), withTiming(1, { duration: 1000 })),
-        -1,
-        true
-      );
-      waveOpacity.value = withRepeat(
-        withSequence(withTiming(0.8, { duration: 1000 }), withTiming(0.3, { duration: 1000 })),
-        -1,
-        true
-      );
-
-      interval = setInterval(async () => {
-        const status = await (recording as Audio.Recording).getStatusAsync();
-        if (status.isRecording) {
-          // Update wave scale based on metering
-          const meteringValue = Math.abs(status.metering || 0);
-          const scaleValue = 1 + meteringValue / 80;
-          waveScale.value = withTiming(scaleValue, { duration: 100 });
-        }
-      }, 100);
-    } else {
-      // Reset wave animation when not recording
-      waveScale.value = withTiming(1);
-      waveOpacity.value = withTiming(0);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [recording]);
-
-  // Reset animation when not recording
-  useEffect(() => {
-    if (!recording) {
-      waveHeights.forEach((height) => {
-        height.value = withTiming(20);
-      });
-      waveOpacities.forEach((opacity) => {
-        opacity.value = withTiming(0.5);
-      });
-    } else {
-      waveOpacities.forEach((opacity) => {
-        opacity.value = withTiming(1);
-      });
-    }
-  }, [recording]);
 
   const startRecording = async () => {
     try {
@@ -248,12 +179,6 @@ export default function VoiceRecorder() {
     await transcribeAudio(recordedUri as string);
   };
 
-  // Add new animated style for the wave
-  const waveStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: waveScale.value }],
-    opacity: waveOpacity.value,
-  }));
-
   // Optimize seek handling
   const handleSeek = async (value: number) => {
     if (soundRef.current) {
@@ -327,7 +252,7 @@ export default function VoiceRecorder() {
 
       <RecordingButton
         isRecording={!!recording}
-        waveStyle={waveStyle}
+        recording={recording}
         onPress={recording ? stopRecording : startRecording}
       />
 

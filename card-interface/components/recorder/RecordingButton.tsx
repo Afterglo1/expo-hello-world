@@ -1,19 +1,28 @@
 import React from "react";
 import { View, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated from "react-native-reanimated";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import { useRecordingAnimation } from "@/hooks/useRecordingAnimation";
+import { Audio } from "expo-av";
 
 interface RecordingButtonProps {
   isRecording: boolean;
-  waveStyle: any;
+  recording: Audio.Recording | null;
   onPress: () => void;
 }
 
-export const RecordingButton: React.FC<RecordingButtonProps> = ({ isRecording, waveStyle, onPress }) => {
+export const RecordingButton: React.FC<RecordingButtonProps> = ({ isRecording, recording, onPress }) => {
+  const { waveScale, waveOpacity } = useRecordingAnimation(recording);
+
+  const waveStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: waveScale.value }],
+    opacity: waveOpacity.value,
+  }));
+
   return (
-    <View className="flex-1 items-center pt-32 shrink-0">
+    <View className="flex-1 items-center pt-32">
       <Animated.View
-        className="absolute top-28 w-[70px] h-[70px] rounded-full bg-sky-200 "
+        className="absolute top-28 w-[70px] h-[70px] rounded-full bg-sky-200"
         style={waveStyle}
       />
       <Pressable
