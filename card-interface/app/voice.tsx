@@ -1,5 +1,5 @@
-import React, { useReducer, useRef } from "react";
-import { View, Alert } from "react-native";
+import React, { useReducer, useRef, useState } from "react";
+import { View, Alert, Text, ScrollView } from "react-native";
 import {
   Audio,
   AVPlaybackStatusSuccess,
@@ -18,12 +18,16 @@ import { useRecordings } from "@/hooks/useRecordings";
 import { Recording } from "@/types/recording";
 import { recordingReducer, initialRecordingState } from "@/reducers/recordingReducer";
 import { playbackReducer, initialPlaybackState } from "@/reducers/playbackReducer";
+import TypingIndicator from "@/components/recorder/TypingIndicator";
 
 const music = require("@/assets/sounds/music.mp3");
+const voiceData = require("@/assets/sounds/voice.mp3");
 
 export default function VoiceRecorder() {
   const [recordingState, recordingDispatch] = useReducer(recordingReducer, initialRecordingState);
   const [playbackState, playbackDispatch] = useReducer(playbackReducer, initialPlaybackState);
+  const [transcribedText, setTranscribedText] = useState<string | null>();
+  const [processing, setProcessing] = useState<boolean>(false);
 
   // Destructure recording state
   const { recording, recordedUri, recordingTitle, isTitleModalVisible, recordingDuration } = recordingState;
@@ -192,8 +196,29 @@ export default function VoiceRecorder() {
     }
   };
 
-  const handleAudioTranscribe = async () => {
-    await transcribeAudio(recordedUri as string);
+  const handleRecordingTranscribe = async (recording: Recording) => {
+    try {
+      setProcessing(true);
+      setTranscribedText(null);
+
+      // For recorded files, we can use the URI directly
+      const fileInfo = {
+        uri: recording.uri,
+        type: "audio/m4a",
+        name: `${recording.title}.m4a`,
+      };
+
+      const transcribedText = await transcribeAudio(fileInfo);
+
+      if (typeof transcribedText === "string") {
+        setTranscribedText(transcribedText);
+      }
+    } catch (error) {
+      console.error("Error transcribing recording:", error);
+      Alert.alert("Error", "Failed to transcribe audio");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // Optimize seek handling
@@ -256,17 +281,22 @@ export default function VoiceRecorder() {
 
   return (
     <View className="flex-1 mt-2">
-      <SampleMusicPlayer
-        isPlaying={isPlaying}
-        onPlay={() => playSound(music)}
-        onStop={stopSoundPlay}
-      />
       <RecordingsList
         recordings={recordings}
-        onPlay={(uri) => playSound({ uri })}
+        onPlay={(uri) => playSound(uri)}
         onDelete={deleteRecording}
+        onTranscribe={handleRecordingTranscribe}
       />
 
+      <View className="p-4 h-1/3">
+        {transcribedText && (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text>{transcribedText}</Text>
+          </ScrollView>
+        )}
+
+        {processing && <TypingIndicator />}
+      </View>
       <RecordingButton
         isRecording={!!recording}
         recording={recording}

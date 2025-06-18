@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, Alert, LayoutChangeEvent } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Recording } from "@/types/recording";
 
@@ -7,9 +7,21 @@ interface RecordingItemProps {
   recording: Recording;
   onPlay: () => void;
   onDelete: () => void;
+  onTranscribe: () => void;
+  containerHeight?: number;
+  itemIndex?: number;
+  totalItems?: number;
 }
 
-export const RecordingItem: React.FC<RecordingItemProps> = ({ recording, onPlay, onDelete }) => {
+export const RecordingItem: React.FC<RecordingItemProps> = ({
+  recording,
+  onPlay,
+  onDelete,
+  onTranscribe,
+  containerHeight = 0,
+  itemIndex = 0,
+  totalItems = 0,
+}) => {
   const handleDelete = () => {
     Alert.alert("Delete Recording", "Are you sure you want to delete this recording?", [
       { text: "Cancel", style: "cancel" },
