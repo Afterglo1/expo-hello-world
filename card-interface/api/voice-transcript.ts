@@ -1,30 +1,28 @@
 import { api } from "./config";
 
-const file = "file:///path/to/audio.wav";
+interface TranscribeAudioProps {
+  uri: string;
+  type: string;
+  name: string;
+}
 
-const formData = new FormData();
-formData.append("file", file);
-
-const transcribeAudio = async (fileURI: string) => {
-  const formData = new FormData();
-  const file = { uri: fileURI } as unknown as Blob;
-  formData.append("file", file);
-
+const transcribeAudio = async (fileDetails: TranscribeAudioProps): Promise<string | void> => {
   try {
-    await api
-      .post("/", formData, {
+    const formData = new FormData();
+    formData.append("audio_file", fileDetails as any);
+
+    return await api
+      .post("transcription/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          accept: "application/json",
         },
       })
       .then((response) => {
-        console.log("Transcription Result:", response.data);
+        return response?.data?.transcription;
       });
   } catch (error: any) {
-    console.error(
-      "Error uploading audio:",
-      error.response?.data || error.message
-    );
+    console.error("Error uploading audio:", error.response?.data || error.message);
   }
 };
 export { transcribeAudio };
