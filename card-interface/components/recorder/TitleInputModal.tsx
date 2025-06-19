@@ -27,6 +27,7 @@ export const TitleInputModal: React.FC<TitleInputModalProps> = ({
           placeholder="Enter recording title"
           value={title}
           onChangeText={onTitleChange}
+          autoFocus
         />
         <View className="flex-row justify-end gap-2">
           <Pressable
