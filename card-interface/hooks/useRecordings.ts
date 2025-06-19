@@ -22,11 +22,8 @@ export const useRecordings = () => {
 
   const saveRecording = async (newRecording: Recording) => {
     try {
-      const updatedRecordings = [...recordings, newRecording];
-      await AsyncStorage.setItem(
-        "recordings",
-        JSON.stringify(updatedRecordings)
-      );
+      const updatedRecordings = [newRecording, ...recordings];
+      await AsyncStorage.setItem("recordings", JSON.stringify(updatedRecordings));
       setRecordings(updatedRecordings);
     } catch (error) {
       console.error("Error saving recording:", error);
@@ -36,10 +33,7 @@ export const useRecordings = () => {
   const deleteRecording = async (id: string) => {
     try {
       const updatedRecordings = recordings.filter((rec) => rec.id !== id);
-      await AsyncStorage.setItem(
-        "recordings",
-        JSON.stringify(updatedRecordings)
-      );
+      await AsyncStorage.setItem("recordings", JSON.stringify(updatedRecordings));
       setRecordings(updatedRecordings);
     } catch (error) {
       console.error("Error deleting recording:", error);
