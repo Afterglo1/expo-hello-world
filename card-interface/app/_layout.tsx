@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function RootLayout() {
   return (
     <GestureHandlerRootView className="flex-1">
-      <Stack screenOptions={{ title: "Chat Application" }} />
+      <Stack screenOptions={{ headerShown: false }} />
     </GestureHandlerRootView>
   );
 }
