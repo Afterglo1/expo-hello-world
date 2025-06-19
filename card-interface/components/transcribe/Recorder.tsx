@@ -1,4 +1,3 @@
-import { useRecordings } from "@/hooks/useRecordings";
 import { Recording } from "@/types/recording";
 import { formatDuration } from "@/utils/formatDuration";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,20 +5,20 @@ import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { useRef, useState } from "react";
 import { Pressable, View, Modal, Text, Vibration } from "react-native";
 
-const Recorder = () => {
+interface RecorderProps {
+  onSave: (recording: Recording) => void;
+}
+
+const Recorder = (props: RecorderProps) => {
+  const { onSave } = props;
   const [openRecordingModal, setOpenRecordingModal] = useState<boolean>(false);
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const [recordingState, setRecordingState] = useState<"start" | "pause" | null>(null);
-  const { saveRecording } = useRecordings();
 
   const handleRecording = () => {
     setOpenRecordingModal(true);
     startRecording();
-  };
-
-  const closeModal = () => {
-    setOpenRecordingModal(false);
   };
 
   // Configure audio recording properties
@@ -94,7 +93,7 @@ const Recorder = () => {
 
       //   alert(JSON.stringify(newRecording));
 
-      saveRecording(newRecording);
+      onSave(newRecording);
       recordingRef.current = null;
       setRecordingState(null);
       setOpenRecordingModal(false);
@@ -106,7 +105,7 @@ const Recorder = () => {
   return (
     <View className="flex-1 flex-row w-full absolute bottom-2  justify-center ">
       <Pressable
-        className="p-4 shadow-md  rounded-full bg-blue-600 border border-gray-400"
+        className="p-4 shadow-md  rounded-full bg-[#0a9396]  "
         onPress={handleRecording}
       >
         <Ionicons
@@ -140,11 +139,11 @@ const Recorder = () => {
                   <Ionicons
                     name="close"
                     size={16}
-                    color="blue"
+                    color="#005f73"
                   />
                 </Pressable>
                 <Pressable
-                  className="bg-blue-600 py-2 px-4 rounded-xl"
+                  className="bg-[#005f73] py-2 px-4 rounded-xl"
                   onPress={stopAndSaveRecording}
                 >
                   <Text className="text-white">Stop Recording</Text>
@@ -156,7 +155,7 @@ const Recorder = () => {
                   <Ionicons
                     name={`${recordingState === "start" ? "pause" : "play"}`}
                     size={16}
-                    color="blue"
+                    color="#005f73"
                   />
                 </Pressable>
               </View>
