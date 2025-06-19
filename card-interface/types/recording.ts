@@ -4,4 +4,5 @@ export interface Recording {
   uri: string;
   duration: number;
   createdAt: number;
+  transcribedText?: string;
 }
