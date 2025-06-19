@@ -12,7 +12,7 @@ const formatTimestamp = (timestamp: number) => {
 
   hours = hours % 12 || 12; // Convert 0 to 12
 
-  return `${month},${day} ${year} ${hours}:${minutes}${ampm}`;
+  return `${month},${day} ${year} ${hours}:${minutes} ${ampm}`;
 };
 
 export { formatTimestamp };
