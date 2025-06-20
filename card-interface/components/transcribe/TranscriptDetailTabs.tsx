@@ -1,10 +1,45 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, Pressable, ScrollView, Animated, LayoutChangeEvent } from "react-native";
 
 const tabs = [{ title: "Notes" }, { title: "Transcript" }, { title: "Speaker Sections" }];
 
 const TranscriptDetailTabs = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [tabLayouts, setTabLayouts] = useState<{ x: number; width: number }[]>([]);
+  const indicatorX = useRef(new Animated.Value(0)).current;
+  const indicatorWidth = useRef(new Animated.Value(0)).current;
+
+  // Handle tab layout measurement
+  const handleTabLayout = (idx: number, e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout;
+    setTabLayouts((prev) => {
+      const next = [...prev];
+      next[idx] = { x, width };
+      return next;
+    });
+  };
+
+  // Set initial indicator position after all tabs are measured
+  React.useEffect(() => {
+    if (tabLayouts.length === tabs.length && tabLayouts[activeTab]) {
+      indicatorX.setValue(tabLayouts[activeTab].x);
+      indicatorWidth.setValue(tabLayouts[activeTab].width);
+    }
+  }, [tabLayouts.length]);
+
+  // Animate indicator when activeTab changes
+  React.useEffect(() => {
+    if (tabLayouts.length === tabs.length && tabLayouts[activeTab]) {
+      Animated.spring(indicatorX, {
+        toValue: tabLayouts[activeTab].x,
+        useNativeDriver: false,
+      }).start();
+      Animated.spring(indicatorWidth, {
+        toValue: tabLayouts[activeTab].width,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [activeTab, tabLayouts]);
 
   return (
     <View className="mt-4">
@@ -12,20 +47,38 @@ const TranscriptDetailTabs = () => {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: "row" }}
+          contentContainerClassName="flex-row relative"
         >
+          {/* Animated Indicator */}
+          {tabLayouts.length === tabs.length && (
+            <Animated.View
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                transform: [{ translateX: indicatorX }],
+                width: indicatorWidth,
+                backgroundColor: "#f1f5f9",
+                borderColor: "#e2e8f0",
+                borderWidth: 1,
+                borderRadius: 999,
+                zIndex: 0,
+              }}
+            />
+          )}
           {tabs.map((tab, idx) => (
             <Pressable
               key={tab.title}
               onPress={() => setActiveTab(idx)}
-              className={[
-                "px-5 py-1 mx-1 rounded-2xl ",
-                activeTab === idx ? "bg-slate-100 border border-slate-200" : "bg-transparent",
-                "justify-center items-center",
-              ].join(" ")}
+              onLayout={(e) => handleTabLayout(idx, e)}
+              style={{ zIndex: 1 }}
+              className="px-5 py-1 mx-1 rounded-2xl justify-center items-center"
             >
               <Text
-                className={["text-base", "text-[#005f73]", activeTab === idx ? "font-bold" : "font-normal"].join(" ")}
+                className={["text-base", "text-[#005f73]", activeTab === idx ? "font-semibold" : "font-normal"].join(
+                  " "
+                )}
               >
                 {tab.title}
               </Text>
