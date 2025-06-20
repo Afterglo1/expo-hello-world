@@ -15,10 +15,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Camera access is not used in this app version, but required by linked libraries.",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record audio.",
-        "UIBackgroundModes": [
-          "audio",
-          "fetch"
-        ]
+        "UIBackgroundModes": ["audio", "fetch"]
       }
     },
     "android": {
@@ -46,7 +43,8 @@
       ],
       "expo-audio",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
