@@ -11,16 +11,13 @@ const transcribeAudio = async (fileDetails: TranscribeAudioProps): Promise<strin
     const formData = new FormData();
     formData.append("audio_file", fileDetails as any);
 
-    return await api
-      .post("transcription/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          accept: "application/json",
-        },
-      })
-      .then((response) => {
-        return response?.data?.transcription;
-      });
+    const res = await api.post("/transcription/", formData, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    const data = res?.data?.transcript;
+    return data;
   } catch (error: any) {
     console.error("Error uploading audio:", error.response?.data || error.message);
   }
