@@ -1,9 +1,13 @@
+import { transcribeAudio } from "@/api/voice-transcript";
 import { Recording } from "@/types/recording";
 import { formatDuration } from "@/utils/formatDuration";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
 import { useRef, useState } from "react";
-import { Pressable, View, Modal, Text, Vibration } from "react-native";
+import { Pressable, View, Modal, Text, Vibration, Alert, ActivityIndicatorBase, ActivityIndicator } from "react-native";
+
+import { Asset } from "expo-asset";
+const voiceData = require("@/assets/sounds/voice.mp3");
 
 interface RecorderProps {
   onSave: (recording: Recording) => void;
@@ -15,6 +19,7 @@ const Recorder = (props: RecorderProps) => {
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const [recordingState, setRecordingState] = useState<"start" | "pause" | null>(null);
+  const [processing, setProcessing] = useState<boolean>(false);
 
   const handleRecording = () => {
     setOpenRecordingModal(true);
@@ -83,12 +88,32 @@ const Recorder = (props: RecorderProps) => {
       const uri = recordingRef.current?.getURI() as string;
       Vibration.vibrate(100);
 
+      // const file = Asset.fromModule(voiceData);
+      // await file.downloadAsync();
+      // const { uri, type, name } = file;
+
+      // const fileUri = (file.localUri || uri) as string;
+
+      // // For recorded files, we can use the URI directly
+      // const fileInfo = {
+      //   uri: fileUri,
+      //   type: `audio/${type}`,
+      //   name: `${name}.${type}`,
+      // };
+
+      // const transcribedText = await handleRecordingTranscribe(fileUri);
+
+      // alert(transcribedText);
+
+      // await transcribeAudio(fileInfo);
+
       const newRecording: Recording = {
         id: Date.now().toString(),
         title: Date.now().toString(),
         uri: uri,
         duration: recordingDuration,
         createdAt: Date.now(),
+        // transcribedText,
       };
 
       //   alert(JSON.stringify(newRecording));
@@ -102,8 +127,34 @@ const Recorder = (props: RecorderProps) => {
     }
   };
 
+  const handleRecordingTranscribe = async (uri: string) => {
+    try {
+      setProcessing(true);
+      // For recorded files, we can use the URI directly
+      const fileInfo = {
+        uri,
+        type: "audio/m4a",
+        name: `${Date.now()}.m4a`,
+      };
+
+      const transcribedText = await transcribeAudio(fileInfo);
+      // const transcribedText = "TRANSCRIBED TEXT";
+
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      setProcessing(false);
+
+      if (typeof transcribedText === "string") {
+        return transcribedText;
+      }
+    } catch (error) {
+      console.error("Error transcribing recording:", error);
+      Alert.alert("Error", "Failed to transcribe audio");
+    }
+  };
+
   return (
-    <View className="flex-1 flex-row w-full absolute bottom-2  justify-center ">
+    <View className="flex-1 flex-row w-full absolute bottom-2  justify-center">
       <Pressable
         className="p-4 shadow-md  rounded-full bg-[#0a9396]  "
         onPress={handleRecording}
@@ -122,7 +173,15 @@ const Recorder = (props: RecorderProps) => {
           transparent
           className="px-10"
         >
-          <View className=" flex-1 w-full box-border h-1/5 absolute bottom-10  ">
+          {processing && (
+            <View className=" w-full h-full flex-1 items-center justify-center">
+              <ActivityIndicator
+                size="small"
+                color="#0a9396"
+              />
+            </View>
+          )}
+          <View className=" flex-1 w-full box-border h-1/5 absolute bottom-10">
             <View className=" flex-1 w-11/12 mx-auto shadow-xl bg-white rounded-3xl p-4">
               <Text className="text-center font-bold">Recording Audio</Text>
               <View className="py-2 items-center h-20 justify-center ">
