@@ -2,13 +2,14 @@ import { formatDuration } from "@/utils/formatDuration";
 import { formatTimestamp } from "@/utils/formatTimestamp";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio, AVPlaybackStatusSuccess } from "expo-av";
+import { Link } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal, Alert } from "react-native";
 
 interface RecordedItemProps {
   recording: {
     duration: number;
-    transcription?: string;
+    transcribedText?: string;
     createdAt: number;
     uri: string;
     id: string;
@@ -20,7 +21,7 @@ interface RecordedItemProps {
 }
 const RecordedItem = (props: RecordedItemProps) => {
   const {
-    recording: { createdAt, duration, transcription, uri, id },
+    recording: { createdAt, duration, transcribedText, uri, id },
     onDelete,
     isNew,
     currentlyPlaying,
@@ -97,45 +98,52 @@ const RecordedItem = (props: RecordedItemProps) => {
   };
 
   return (
-    <View className="p-4 border border-[#0060732c] rounded-lg relative gap-2">
-      <View className=" flex-row justify-between ">
-        <View className="flex-row items-center gap-2">
-          {isNew && (
-            <Text className=" text-white text-xs uppercase p-1 px-2 rounded-2xl bg-[#005f73] text-center font-bold">
-              New{" "}
-            </Text>
-          )}
-          <Text className="text-sm font-semibold text-slate-400">{formatTimestamp(createdAt)}</Text>
-        </View>
-        <Pressable
-          className="flex-row justify-between p-1 px-3 bg-gray-200 rounded-xl items-center gap-1"
-          onPress={handlePlayPauseAudio}
-        >
-          <Text>
-            <Ionicons
-              color="#005f73"
-              size={12}
-              name={`${isPlaying ? "pause" : "play"}`}
-            />
-          </Text>
-          <Text className="text-sm font-bold">{formatDuration(duration)}</Text>
-        </Pressable>
-      </View>
-      <View>
-        <Text>{transcription || "Transcription text will appear here"}</Text>
-      </View>
-      <Pressable
-        className="p-2 pt-4 items-end"
-        onPress={handleMenuPress}
+    <View className="flex-1">
+      <Link
+        asChild
+        href={`/transcribe/${id}`}
       >
-        <Text>
-          <Ionicons
-            name="ellipsis-vertical"
-            size={12}
-            color="gray"
-          />
-        </Text>
-      </Pressable>
+        <Pressable className="p-4 border border-[#0060732c] rounded-lg relative gap-2">
+          <View className=" flex-row justify-between ">
+            <View className="flex-row items-center gap-2">
+              {isNew && (
+                <Text className=" text-white text-xs uppercase p-1 px-2 rounded-2xl bg-[#005f73] text-center font-bold">
+                  New{" "}
+                </Text>
+              )}
+              <Text className="text-sm font-semibold text-slate-400">{formatTimestamp(createdAt)}</Text>
+            </View>
+            <Pressable
+              className="flex-row justify-between p-1 px-3 bg-gray-200 rounded-xl items-center gap-1"
+              onPress={handlePlayPauseAudio}
+            >
+              <Text>
+                <Ionicons
+                  color="#005f73"
+                  size={12}
+                  name={`${isPlaying ? "pause" : "play"}`}
+                />
+              </Text>
+              <Text className="text-sm font-bold">{formatDuration(duration)}</Text>
+            </Pressable>
+          </View>
+          <View>
+            <Text numberOfLines={4}>{transcribedText || "Transcription text will appear here"}</Text>
+          </View>
+          <Pressable
+            className="p-2 pt-4 self-end"
+            onPress={handleMenuPress}
+          >
+            <Text>
+              <Ionicons
+                name="ellipsis-vertical"
+                size={12}
+                color="gray"
+              />
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Link>
 
       {/* Modal to show options for the audio */}
       {/* {showOptionsModal && ( */}
