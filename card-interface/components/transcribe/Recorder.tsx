@@ -94,14 +94,14 @@ const Recorder = (props: RecorderProps) => {
 
       // const fileUri = (file.localUri || uri) as string;
 
-      // // For recorded files, we can use the URI directly
+      // For recorded files, we can use the URI directly
       // const fileInfo = {
-      //   uri: fileUri,
-      //   type: `audio/${type}`,
-      //   name: `${name}.${type}`,
+      //   uri: uri,
+      //   type: `audio/m4a`,
+      //   name: `${Date.now()}.m4a`,
       // };
 
-      // const transcribedText = await handleRecordingTranscribe(fileUri);
+      const transcribedText = await handleRecordingTranscribe(uri);
 
       // alert(transcribedText);
 
@@ -113,7 +113,7 @@ const Recorder = (props: RecorderProps) => {
         uri: uri,
         duration: recordingDuration,
         createdAt: Date.now(),
-        // transcribedText,
+        transcribedText,
       };
 
       //   alert(JSON.stringify(newRecording));
@@ -138,10 +138,6 @@ const Recorder = (props: RecorderProps) => {
       };
 
       const transcribedText = await transcribeAudio(fileInfo);
-      // const transcribedText = "TRANSCRIBED TEXT";
-
-      // await new Promise((resolve) => setTimeout(resolve, 3000));
-
       setProcessing(false);
 
       if (typeof transcribedText === "string") {

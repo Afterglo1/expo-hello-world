@@ -16,7 +16,7 @@ const transcribeAudio = async (fileDetails: TranscribeAudioProps): Promise<strin
         accept: "application/json",
       },
     });
-    const data = res?.data?.transcript;
+    const data = res?.data?.transcription;
     return data;
   } catch (error: any) {
     console.error("Error uploading audio:", error.response?.data || error.message);
