@@ -1,7 +1,8 @@
 import { FlatList } from "react-native";
 import RecordedItem from "./RecordedItem";
 import { Recording } from "@/types/recording";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 
 interface RecordedListProps {
   recordings: Recording[];
@@ -11,6 +12,14 @@ interface RecordedListProps {
 const RecordedList = (props: RecordedListProps) => {
   const { onDelete, recordings } = props;
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setCurrentlyPlaying(null);
+      };
+    }, [])
+  );
 
   const renderItem = ({ item, index }: { item: Recording; index: number }) => {
     return (
