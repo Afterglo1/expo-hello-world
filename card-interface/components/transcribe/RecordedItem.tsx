@@ -1,3 +1,4 @@
+import { Recording } from "@/types/recording";
 import { formatDuration } from "@/utils/formatDuration";
 import { formatTimestamp } from "@/utils/formatTimestamp";
 import { Ionicons } from "@expo/vector-icons";
@@ -5,32 +6,24 @@ import { Audio, AVPlaybackStatusSuccess } from "expo-av";
 import { Link } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal, Alert } from "react-native";
-
+import DisplayTranscription from "@/components/transcribe/DisplayTranscription";
 interface RecordedItemProps {
-  recording: {
-    duration: number;
-    transcribedText?: string;
-    createdAt: number;
-    uri: string;
-    id: string;
-  };
+  recording: Recording;
   onDelete: (id: string) => void;
   isNew: boolean;
   currentlyPlaying: string | null;
   onSetCurrentlyPlaying: () => void;
+  processing: { id: string } | null;
+  setProcessing: (val: { id: string } | null) => void;
 }
 const RecordedItem = (props: RecordedItemProps) => {
-  const {
-    recording: { createdAt, duration, transcribedText, uri, id },
-    onDelete,
-    isNew,
-    currentlyPlaying,
-    onSetCurrentlyPlaying,
-  } = props;
+  const { recording, onDelete, isNew, currentlyPlaying, onSetCurrentlyPlaying, processing, setProcessing } = props;
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [playbackPosition, setPlaybackPosition] = useState<number>(0);
   const audioRef = useRef<Audio.Sound | null>(null);
+
+  const { createdAt, duration, uri, id } = recording;
 
   useEffect(() => {
     if (currentlyPlaying !== id) {
@@ -128,10 +121,14 @@ const RecordedItem = (props: RecordedItemProps) => {
             </Pressable>
           </View>
           <View>
-            <Text numberOfLines={4}>{transcribedText || "Transcription text will appear here"}</Text>
+            <DisplayTranscription
+              recording={recording}
+              processing={processing}
+              setProcessing={setProcessing}
+            />
           </View>
           <Pressable
-            className="p-2 pt-4 self-end"
+            className="p-2  self-end"
             onPress={handleMenuPress}
           >
             <Text>

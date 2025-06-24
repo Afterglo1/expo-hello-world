@@ -12,6 +12,7 @@ interface RecordedListProps {
 const RecordedList = (props: RecordedListProps) => {
   const { onDelete, recordings } = props;
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<{ id: string } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -29,6 +30,8 @@ const RecordedList = (props: RecordedListProps) => {
         isNew={index === 0}
         currentlyPlaying={currentlyPlaying}
         onSetCurrentlyPlaying={() => setCurrentlyPlaying(item.id)}
+        processing={processing}
+        setProcessing={setProcessing}
       />
     );
   };
