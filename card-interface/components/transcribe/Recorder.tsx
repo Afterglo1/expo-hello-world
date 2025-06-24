@@ -88,28 +88,13 @@ const Recorder = (props: RecorderProps) => {
       const uri = recordingRef.current?.getURI() as string;
       Vibration.vibrate(100);
 
-      // const file = Asset.fromModule(voiceData);
-      // await file.downloadAsync();
-      // const { uri, type, name } = file;
-
-      // const fileUri = (file.localUri || uri) as string;
-
-      // For recorded files, we can use the URI directly
-      // const fileInfo = {
-      //   uri: uri,
-      //   type: `audio/m4a`,
-      //   name: `${Date.now()}.m4a`,
-      // };
-
-      const transcribedText = await handleRecordingTranscribe(uri);
-
-      // alert(transcribedText);
-
-      // await transcribeAudio(fileInfo);
+      const result = await handleRecordingTranscribe(uri);
+      const transcribedText = result?.transcribedText;
+      const name = result?.name as string;
 
       const newRecording: Recording = {
         id: Date.now().toString(),
-        title: Date.now().toString(),
+        title: name,
         uri: uri,
         duration: recordingDuration,
         createdAt: Date.now(),
@@ -141,7 +126,7 @@ const Recorder = (props: RecorderProps) => {
       setProcessing(false);
 
       if (typeof transcribedText === "string") {
-        return transcribedText;
+        return { ...fileInfo, transcribedText };
       }
     } catch (error) {
       console.error("Error transcribing recording:", error);
