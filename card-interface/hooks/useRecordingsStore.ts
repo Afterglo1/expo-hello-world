@@ -7,6 +7,7 @@ interface RecordingsState {
   loadRecordings: () => Promise<void>;
   saveRecording: (newRecording: Recording) => Promise<void>;
   deleteRecording: (id: string) => Promise<void>;
+  updateRecording: (updatedRecording: Recording) => Promise<void>;
 }
 
 export const useRecordingsStore = create<RecordingsState>((set, get) => ({
@@ -37,6 +38,17 @@ export const useRecordingsStore = create<RecordingsState>((set, get) => ({
       set({ recordings: updatedRecordings });
     } catch (error) {
       console.error("Error deleting recording:", error);
+    }
+  },
+  updateRecording: async (updatedRecording: Recording) => {
+    try {
+      const updatedRecordings = get().recordings.map((rec: Recording) =>
+        rec.id === updatedRecording.id ? updatedRecording : rec
+      );
+      await AsyncStorage.setItem("recordings", JSON.stringify(updatedRecordings));
+      set({ recordings: updatedRecordings });
+    } catch (error) {
+      console.error("Error updating recording:", error);
     }
   },
 }));
