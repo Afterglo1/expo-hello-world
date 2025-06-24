@@ -1,13 +1,21 @@
 import React, { useState, useRef } from "react";
 import { View, Text, Pressable, ScrollView, Animated, LayoutChangeEvent } from "react-native";
+import { Recording } from "@/types/recording";
+import DisplayTranscription from "@/components/transcribe/DisplayTranscription";
 
 const tabs = [{ title: "Notes" }, { title: "Transcript" }, { title: "Speaker Sections" }];
 
-const TranscriptDetailTabs = () => {
+interface TranscriptDetailTabsProps {
+  recording: Recording;
+}
+
+const TranscriptDetailTabs = (props: TranscriptDetailTabsProps) => {
   const [activeTab, setActiveTab] = useState(0);
   const [tabLayouts, setTabLayouts] = useState<{ x: number; width: number }[]>([]);
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
+  const [processing, setProcessing] = useState<{ id: string } | null>(null);
+  const { recording } = props;
 
   // Handle tab layout measurement
   const handleTabLayout = (idx: number, e: LayoutChangeEvent) => {
@@ -89,7 +97,13 @@ const TranscriptDetailTabs = () => {
       {/* Tab Content */}
       <View className="p-4">
         {activeTab === 0 && <Text>Notes content goes here.</Text>}
-        {activeTab === 1 && <Text>Transcript content goes here.</Text>}
+        {activeTab === 1 && (
+          <DisplayTranscription
+            recording={recording}
+            processing={processing}
+            setProcessing={setProcessing}
+          />
+        )}
         {activeTab === 2 && <Text>Speaker sections content goes here.</Text>}
       </View>
     </View>

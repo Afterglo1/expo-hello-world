@@ -56,7 +56,7 @@ const TranscribedAudioComponent = () => {
         <Text className="text-slate-400 text-xs font-semibold">{formatTimestamp(recordingData?.createdAt)}</Text>
       </View>
       <Playback uri={recordingData?.uri} />
-      <TranscriptDetailTabs />
+      <TranscriptDetailTabs recording={recordingData} />
     </View>
   );
 };
