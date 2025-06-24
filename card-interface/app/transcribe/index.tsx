@@ -1,10 +1,15 @@
 import RecordedList from "@/components/transcribe/RecordedList";
 import Recorder from "@/components/transcribe/Recorder";
-import { useRecordings } from "@/hooks/useRecordings";
+import { useRecordingsStore } from "@/hooks/useRecordingsStore";
+import { useEffect } from "react";
 import { View } from "react-native";
 
 const Transcribe = () => {
-  const { saveRecording, recordings, deleteRecording } = useRecordings();
+  const { saveRecording, recordings, deleteRecording, loadRecordings } = useRecordingsStore();
+
+  useEffect(() => {
+    loadRecordings();
+  }, []);
 
   return (
     <View className="flex-1">
